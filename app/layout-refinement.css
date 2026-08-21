@@ -1,0 +1,13 @@
+@media (min-width: 721px) {
+  .site-header { max-width: 720px; height: 62px; margin: 0 auto; padding: 0 18px; gap: 22px; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+  .brand { font-size: 14px; }
+  .brand span { font-size: 19px; }
+  .site-header nav { gap: 18px; justify-content: center; }
+  .site-header .notification-button { margin-left: auto; }
+  .site-header .profile > span:last-child { display: none; }
+  .page-container { max-width: 720px; padding: 34px 18px 100px; }
+  .board-grid { grid-template-columns: 1fr; }
+  .board-card { min-height: 220px; }
+}
+.start-time { margin: 14px 0 4px; color: var(--ink); font-size: clamp(20px, 3vw, 28px); font-weight: 700; line-height: 1.25; letter-spacing: -.03em; }
+.board-description { padding: 16px; margin: 0 0 20px; background: #f6f3eb; color: #3f4744; font-size: 14px; line-height: 1.9; }

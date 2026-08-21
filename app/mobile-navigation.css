@@ -1,0 +1,31 @@
+.mobile-header, .mobile-bottom-nav { display: none; }
+.notification-button { position: relative; border: 0; background: transparent; color: var(--ink); font-size: 23px; cursor: pointer; }
+.notification-button i { position: absolute; top: 2px; right: 1px; width: 6px; height: 6px; border-radius: 50%; background: var(--red); }
+
+@media (max-width: 720px) {
+  .site-header { display: none; }
+  .mobile-header { position: fixed; z-index: 8; top: 0; left: 0; right: 0; height: 62px; padding: 0 18px; border-bottom: 1px solid var(--line); background: #fbf9f4; display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; text-align: center; }
+  .mobile-header h1 { margin: 0; font-size: 15px; letter-spacing: .04em; }
+  .mobile-header .avatar { justify-self: end; }
+  .page-container { padding-top: 96px; padding-bottom: 102px; }
+  .mobile-bottom-nav { position: fixed; z-index: 5; bottom: 0; left: 0; right: 0; height: 74px; display: grid; grid-template-columns: repeat(3, 1fr); align-items: center; border-top: 1px solid var(--line); background: rgb(251 249 244 / 96%); backdrop-filter: blur(8px); }
+  .mobile-bottom-nav a { display: grid; justify-items: center; gap: 4px; color: var(--muted); text-decoration: none; font-size: 10px; font-weight: 600; }
+  .mobile-bottom-nav a span { font-size: 19px; line-height: 1; }
+  .mobile-bottom-nav a.active { color: var(--red); }
+  .mobile-bottom-nav a.main { color: var(--ink); }
+  .mobile-bottom-nav a.main.active { color: var(--red); }
+}
+
+@media (min-width: 721px) {
+  .app-preview.mobile .site-header { display: none; }
+  .app-preview.mobile .mobile-header { position: sticky; z-index: 8; top: 0; height: 62px; padding: 0 18px; border-bottom: 1px solid var(--line); background: #fbf9f4; display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; text-align: center; }
+  .app-preview.mobile .mobile-header h1 { margin: 0; font-size: 15px; letter-spacing: .04em; }
+  .app-preview.mobile .mobile-header .avatar { justify-self: end; }
+  .app-preview.mobile .page-container { padding-top: 34px; padding-bottom: 102px; }
+  .app-preview.mobile .mobile-bottom-nav { position: absolute; z-index: 5; bottom: 0; left: 0; right: 0; height: 74px; display: grid; grid-template-columns: repeat(3, 1fr); align-items: center; border-top: 1px solid var(--line); background: rgb(251 249 244 / 96%); }
+  .app-preview.mobile .mobile-bottom-nav a { display: grid; justify-items: center; gap: 4px; color: var(--muted); text-decoration: none; font-size: 10px; font-weight: 600; }
+  .app-preview.mobile .mobile-bottom-nav a span { font-size: 19px; line-height: 1; }
+  .app-preview.mobile .mobile-bottom-nav a.active, .app-preview.mobile .mobile-bottom-nav a.main.active { color: var(--red); }
+  .app-preview.mobile .mobile-bottom-nav a.main { color: var(--ink); }
+  .app-preview.mobile .app-frame { position: relative; }
+}

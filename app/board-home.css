@@ -1,0 +1,9 @@
+.board-home .section-heading { padding-top: 0; }
+.board-search { display: flex; align-items: center; gap: 10px; max-width: 520px; padding: 12px 15px; margin: 0 0 22px; border: 1px solid var(--line); background: #fff; color: var(--muted); }
+.board-search input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; font-size: 13px; }
+.board-title { color: inherit; text-decoration: none; }
+.board-card button:disabled { cursor: not-allowed; opacity: .48; }
+.create-board-fab { position: fixed; z-index: 6; right: 28px; bottom: 28px; width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; background: var(--red); color: #fff; text-decoration: none; box-shadow: 0 8px 20px rgb(174 57 37 / 32%); font-size: 32px; line-height: 1; }
+
+@media (max-width: 720px) { .create-board-fab { right: 20px; bottom: 91px; } .board-home .section-heading { padding-top: 3px; } }
+@media (min-width: 721px) { .app-preview.mobile .create-board-fab { position: absolute; right: 20px; bottom: 91px; } }
