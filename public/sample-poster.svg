@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 342 513">
+  <rect width="342" height="513" fill="#253c36"/>
+  <circle cx="171" cy="205" r="95" fill="#efeee5"/>
+  <path d="M76 205a95 95 0 0 0 190 0Z" fill="#ae432c"/>
+  <text x="171" y="390" text-anchor="middle" fill="#f8f6f0" font-family="sans-serif" font-size="22" letter-spacing="6">SAMPLE FILM</text>
+  <text x="171" y="430" text-anchor="middle" fill="#f8f6f0" font-family="sans-serif" font-size="12" letter-spacing="2">COMPONENT PREVIEW</text>
+</svg>
