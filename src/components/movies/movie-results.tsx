@@ -1,11 +1,15 @@
-import type { MovieSearchState } from "@/types/movie";
+import type { Movie, MovieSearchState } from "@/types/movie";
 import { MovieCard } from "./movie-card";
 import styles from "./movie-results.module.css";
 
-export type MovieResultsProps = { state: MovieSearchState };
+export type MovieResultsProps = {
+  state: MovieSearchState;
+  onSelect?: (movie: Movie) => void;
+  selectedMovieId?: number;
+};
 
 /** UI担当B: 親から渡された状態を描画する。ここでは通信しない。 */
-export function MovieResults({ state }: MovieResultsProps) {
+export function MovieResults({ state, onSelect, selectedMovieId }: MovieResultsProps) {
   return (
     <section
       className={styles.results}
@@ -55,6 +59,17 @@ export function MovieResults({ state }: MovieResultsProps) {
           {state.movies.map((movie) => (
             <li key={movie.tmdbId}>
               <MovieCard movie={movie} />
+              {onSelect && (
+                <button
+                  type="button"
+                  className={styles.selectButton}
+                  aria-pressed={selectedMovieId === movie.tmdbId}
+                  aria-label={`「${movie.title}」を選択`}
+                  onClick={() => onSelect(movie)}
+                >
+                  {selectedMovieId === movie.tmdbId ? "選択中" : "この映画を選択"}
+                </button>
+              )}
             </li>
           ))}
         </ul>

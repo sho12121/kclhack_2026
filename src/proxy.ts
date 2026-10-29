@@ -44,5 +44,9 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/login/:path*", "/account/:path*"],
+  matcher: [
+    "/login/:path*",
+    "/account/:path*",
+    { source: "/", has: [{ type: "query", key: "create", value: "1" }] },
+  ],
 };

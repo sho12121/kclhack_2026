@@ -4,8 +4,8 @@ import Image from "next/image";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ハナシネマ | 次に語りたい映画を探そう",
-  description: "映画との出会いから、会話がはじまる。気になる作品を検索できる映画SNS。",
+  title: "ハナシネマ | 映画について語る掲示板",
+  description: "映画の感想を、人数と時間を区切って語り合う映画掲示板。",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

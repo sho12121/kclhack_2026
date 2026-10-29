@@ -70,8 +70,22 @@
 }
 
 .card {
-  height: 100%;
   overflow: hidden;
+}
+
+.selectButton {
+  margin-top: 12px;
+  padding: 10px;
+  width: 100%;
+  border: 1px solid var(--ink);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.selectButton[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--surface);
 }
 
 .poster {

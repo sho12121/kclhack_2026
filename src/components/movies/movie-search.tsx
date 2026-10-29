@@ -5,12 +5,18 @@ import type {
   MovieSearchResponse,
   MovieSearchErrorResponse,
   MovieSearchState,
+  Movie,
 } from "@/types/movie";
 import { SearchForm } from "./search-form";
 import { MovieResults } from "./movie-results";
 
 /** S担当: フォームと表示の間に入り、通信と状態の変更を管理する。 */
-export function MovieSearch() { //この関数が、page.tsxで読み込んだMovieSearchコンポーネント
+export type MovieSearchProps = {
+  onSelect?: (movie: Movie) => void;
+  selectedMovieId?: number;
+};
+
+export function MovieSearch({ onSelect, selectedMovieId }: MovieSearchProps = {}) { //この関数が、page.tsxで読み込んだMovieSearchコンポーネント
   const [state, setState] = useState<MovieSearchState>({ status: "idle" });
   //このstateをreturn内で子のSearchFormコンポーネントに渡している。初期値は"idle"
 // "idle"	まだ検索していない
@@ -64,7 +70,7 @@ export function MovieSearch() { //この関数が、page.tsxで読み込んだMo
       <SearchForm onSearch={handleSearch} isLoading={state.status === "loading"} />
       {/* handleSearchはこのMovieSearch関数内にある関数で、それを子であるSearchFormコンポーネントに渡している。 */}
       {/*state.status=== "loading" で、stateという変数にstatus要素を見て、検索中かどうかを調べる→trueかfalseを渡す */}
-      <MovieResults state={state} />
+      <MovieResults state={state} onSelect={onSelect} selectedMovieId={selectedMovieId} />
       {/*  MovieSearchは検索フォームと検索結果を配置している。 */}
     </>
   );

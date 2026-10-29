@@ -9,7 +9,7 @@ export async function login(formData: FormData) {
   const requestedPath = formData.get("next");
 
   // 今あるページだけを、戻り先として許可する。
-  const allowedPaths = ["/", "/account"];
+  const allowedPaths = ["/", "/account", "/?create=1"];
 
   const next =
     typeof requestedPath === "string" &&
