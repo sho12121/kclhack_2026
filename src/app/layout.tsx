@@ -17,7 +17,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Link className="brand" href="/" aria-label="ハナシネマ ホーム">
             <span className="brand-mark" aria-hidden="true">◒</span>ハナシネマ
           </Link>
-          <span className="header-note">映画で、つながる。</span>
+          <nav className="site-nav" aria-label="アカウント">
+            <Link className="nav-link" href="/login">ログイン</Link>
+            <Link className="nav-link" href="/account">プロフィール</Link>
+          </nav>
         </header>
         <main id="main" className="main-container">{children}</main>
         <footer className="site-footer" aria-label="クレジット">

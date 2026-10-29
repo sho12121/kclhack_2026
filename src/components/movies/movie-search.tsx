@@ -9,9 +9,15 @@ import type {
 import { SearchForm } from "./search-form";
 import { MovieResults } from "./movie-results";
 
-/** 経験者担当: フォームと表示の間に入り、通信と状態の変更を管理する。 */
-export function MovieSearch() {
+/** S担当: フォームと表示の間に入り、通信と状態の変更を管理する。 */
+export function MovieSearch() { //この関数が、page.tsxで読み込んだMovieSearchコンポーネント
   const [state, setState] = useState<MovieSearchState>({ status: "idle" });
+  //このstateをreturn内で子のSearchFormコンポーネントに渡している。初期値は"idle"
+// "idle"	まだ検索していない
+// "loading"	検索を始めて、結果を待っている
+// "success"	検索に成功した
+// "error"	検索に失敗した
+
   const activeRequest = useRef<AbortController | null>(null);
 
   // ページを離れたら、不要になったブラウザ側の通信を止める。
@@ -56,7 +62,10 @@ export function MovieSearch() {
   return (
     <>
       <SearchForm onSearch={handleSearch} isLoading={state.status === "loading"} />
+      {/* handleSearchはこのMovieSearch関数内にある関数で、それを子であるSearchFormコンポーネントに渡している。 */}
+      {/*state.status=== "loading" で、stateという変数にstatus要素を見て、検索中かどうかを調べる→trueかfalseを渡す */}
       <MovieResults state={state} />
+      {/*  MovieSearchは検索フォームと検索結果を配置している。 */}
     </>
   );
 }
