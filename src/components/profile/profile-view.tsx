@@ -5,7 +5,7 @@ export type ProfileViewProps = {
   } | null;
 };
 
-/** プロフィールの表示だけを担当。認証・データ取得・保存はページ側で扱う。 */
+/** プロフィールの表示だけを担当（下位互換用コンポーネント） */
 export function ProfileView({ profile }: ProfileViewProps) {
   return (
     <section aria-labelledby="profile-title">
@@ -24,3 +24,5 @@ export function ProfileView({ profile }: ProfileViewProps) {
     </section>
   );
 }
+
+export { AccountView } from "./account-view";

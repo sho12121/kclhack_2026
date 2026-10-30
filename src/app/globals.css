@@ -197,3 +197,22 @@ h1 {
     padding: 24px 0;
   }
 }
+
+/* アカウント（マイページ）専用のフルスクリーンレイアウト設定 */
+body:has(.account-page-root) {
+  background: #f1f5f9;
+}
+
+body:has(.account-page-root) .skip-link,
+body:has(.account-page-root) .site-header,
+body:has(.account-page-root) .site-footer {
+  display: none !important;
+}
+
+body:has(.account-page-root) .main-container {
+  max-width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  min-height: 100vh !important;
+}
+
