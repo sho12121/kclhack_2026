@@ -15,7 +15,7 @@ export default async function LoginPage({
   const next = typeof params.next === "string" ? params.next : "/account";
 
   return (
-    <section>
+    <section className="auth-card">
       <h1>ログイン</h1>
 
       <form action={login}>   {/*フォームを送信するとlogin(actions.ts)に入力内容送信*/}

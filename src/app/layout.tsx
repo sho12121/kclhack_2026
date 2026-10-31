@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import Image from "next/image";
+import { SiteHeader } from "@/components/layout/site-header";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,15 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ja">
       <body>
         <a className="skip-link" href="#main">本文へ移動</a>
-        <header className="site-header">
-          <Link className="brand" href="/" aria-label="ハナシネマ ホーム">
-            <span className="brand-mark" aria-hidden="true">◒</span>ハナシネマ
-          </Link>
-          <nav className="site-nav" aria-label="アカウント">
-            <Link className="nav-link" href="/login">ログイン</Link>
-            <Link className="nav-link" href="/account">プロフィール</Link>
-          </nav>
-        </header>
+        <SiteHeader />
         <main id="main" className="main-container">{children}</main>
         <footer className="site-footer" aria-label="クレジット">
           <p className="footer-tagline">一本の映画から、話したいことがある。</p>

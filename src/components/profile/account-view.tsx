@@ -4,18 +4,11 @@ import React, { useState, useTransition } from "react";
 import Link from "next/link";
 import styles from "./account.module.css";
 import { UserProfile, UserPost, FavoriteMovie, ActivityItem } from "@/types/profile";
-import { logout } from "@/app/login/actions";
+import { SiteSidebar } from "@/components/layout/site-sidebar";
 import { updateProfile } from "@/app/account/actions";
 import {
-  MovieCameraLogo,
-  HomeIcon,
   ChatIcon,
-  FilmIcon,
-  UsersIcon,
   UserIcon,
-  SettingsIcon,
-  BellIcon,
-  SearchIcon,
   EditPencilIcon,
   HeartIcon,
   MessageCircleIcon,
@@ -24,8 +17,6 @@ import {
   MapPinIcon,
   TagIcon,
   GenderIcon,
-  ChevronDownIcon,
-  CameraProjectorWatermark,
 } from "./icons";
 import {
   CoverArtwork,
@@ -138,7 +129,6 @@ export type AccountViewProps = {
 export function AccountView({ initialProfile }: AccountViewProps) {
   const [profile, setProfile] = useState<UserProfile>(initialProfile);
   const [activeTab, setActiveTab] = useState<"posts" | "favorites">("posts");
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -209,121 +199,13 @@ export function AccountView({ initialProfile }: AccountViewProps) {
   };
 
   return (
-    <div className={`account-page-root ${styles.accountPageRoot}`}>
-      {/* 1. 上部ヘッダー */}
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <Link href="/" className={styles.logoLink}>
-            <MovieCameraLogo />
-            <span className={styles.logoTitle}>ハナシネマ</span>
-          </Link>
-          <span className={styles.headerSubtitle}>
-            映画について語りたい人が語り合える掲示板
-          </span>
-        </div>
-
-        <div className={styles.headerRight}>
-          <div className={styles.searchBox}>
-            <SearchIcon className={styles.searchIcon} />
-            <input
-              type="text"
-              placeholder="映画・ユーザーを検索"
-              className={styles.searchInput}
-              aria-label="映画・ユーザーを検索"
-            />
-          </div>
-
-          <button
-            type="button"
-            className={styles.iconButton}
-            aria-label="通知"
-            onClick={() => alert("通知機能は現在準備中です。")}
-          >
-            <BellIcon />
-          </button>
-
-          <div className={styles.userMenuWrapper}>
-            <button
-              type="button"
-              className={styles.userMenuButton}
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-expanded={isMenuOpen}
-              aria-label="ユーザーメニュー"
-            >
-              <div className={styles.headerAvatar}>
-                <TakashiAvatar />
-              </div>
-              <ChevronDownIcon />
-            </button>
-
-            {isMenuOpen && (
-              <div className={styles.menuDropdown}>
-                <button
-                  type="button"
-                  className={styles.dropdownItem}
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    handleOpenEdit();
-                  }}
-                >
-                  <EditPencilIcon />
-                  プロフィール編集
-                </button>
-                <form action={logout}>
-                  <button
-                    type="submit"
-                    className={`${styles.dropdownItem} ${styles.logoutItem}`}
-                  >
-                    ログアウト
-                  </button>
-                </form>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
+    <div className={styles.accountPageRoot}>
       {/* 2. メインコンテンツエリア (3カラム) */}
       <div className={styles.layoutContainer}>
-        {/* 2-A. 左サイドバー */}
-        <aside className={styles.leftSidebar} aria-label="ナビゲーション">
-          <nav className={styles.navGroup}>
-            <Link href="/" className={styles.navLink}>
-              <HomeIcon />
-              <span>ホーム</span>
-            </Link>
-            <Link href="/" className={styles.navLink}>
-              <ChatIcon />
-              <span>トピックを探す</span>
-            </Link>
-            <Link href="/" className={styles.navLink}>
-              <FilmIcon />
-              <span>映画を探す</span>
-            </Link>
-            <Link href="/" className={styles.navLink}>
-              <UsersIcon />
-              <span>ユーザーを探す</span>
-            </Link>
-            <Link href="/account" className={`${styles.navLink} ${styles.navLinkActive}`}>
-              <UserIcon />
-              <span>マイページ</span>
-            </Link>
-            <Link href="/account" className={styles.navLink} onClick={(e) => { e.preventDefault(); handleOpenEdit(); }}>
-              <SettingsIcon />
-              <span>設定</span>
-            </Link>
-          </nav>
-
-          <div className={styles.sidebarFooter}>
-            <CameraProjectorWatermark />
-            <p className={styles.sidebarTagline}>
-              好きな映画の話で、<br />もっと広がる世界を。
-            </p>
-          </div>
-        </aside>
+        <SiteSidebar active="account" onEditProfile={handleOpenEdit} />
 
         {/* 2-B. 中央メインカラム */}
-        <main className={styles.centerColumn}>
+        <div className={styles.centerColumn}>
           {/* プロフィールヒーローカード */}
           <div className={styles.profileHeroCard}>
             <div className={styles.coverPhotoWrapper}>
@@ -421,7 +303,7 @@ export function AccountView({ initialProfile }: AccountViewProps) {
               </div>
             </div>
           )}
-        </main>
+        </div>
 
         {/* 2-C. 右サイドバー */}
         <aside className={styles.rightSidebar} aria-label="ユーザー情報サマリー">
