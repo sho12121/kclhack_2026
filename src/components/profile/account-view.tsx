@@ -10,8 +10,6 @@ import {
   ChatIcon,
   UserIcon,
   EditPencilIcon,
-  HeartIcon,
-  MessageCircleIcon,
   ChevronRightIcon,
   CalendarIcon,
   MapPinIcon,
@@ -28,109 +26,21 @@ import {
   BatmanPoster,
 } from "./artworks";
 
-// 画像に基づいたサンプル投稿一覧データ
-const initialPosts: UserPost[] = [
-  {
-    id: "p1",
-    movieTitle: "君の名は。",
-    tag: "映画の感想",
-    title: "君の名は。について語りたい",
-    content:
-      "やっぱり何度見ても泣いてしまう...\n映像の美しさと、音楽の力がすごいです。みなさんはこの映画、どう感じましたか？",
-    commentCount: 12,
-    likeCount: 28,
-    date: "2025/04/12",
-    posterBg: "kiminonawa",
-  },
-  {
-    id: "p2",
-    movieTitle: "インセプション",
-    tag: "映画の感想",
-    title: "インセプションについて語ろう",
-    content:
-      "ラストの夢の世界のシーン、何度見ても鳥肌が立ちます。あの終わり方はどう解釈しましたか？自分はこう思います...",
-    commentCount: 23,
-    likeCount: 56,
-    date: "2025/03/28",
-    posterBg: "inception",
-  },
-  {
-    id: "p3",
-    movieTitle: "千と千尋の神隠し",
-    tag: "映画の感想",
-    title: "千と千尋の神隠し",
-    content:
-      "久しぶりに見返したら、やっぱりとても良かったです。千尋の成長がすごく好きで... みなさんの好きなシーンはどこですか？",
-    commentCount: 15,
-    likeCount: 42,
-    date: "2025/02/17",
-    posterBg: "chihiro",
-  },
-  {
-    id: "p4",
-    movieTitle: "ラ・ラ・ランド",
-    tag: "映画の感想",
-    title: "ラ・ラ・ランドについて語りたい",
-    content:
-      "音楽も映像も最高で、何度見ても心が揺さぶられます。ラストのシーンについて、みなさんはどう思いましたか？",
-    commentCount: 31,
-    likeCount: 67,
-    date: "2025/01/10",
-    posterBg: "lalaland",
-  },
-  {
-    id: "p5",
-    movieTitle: "THE BATMAN",
-    tag: "映画の話題",
-    title: "「THE BATMAN」の考察スレ",
-    content:
-      "ロバート・パティンソンのバットマン、めちゃくちゃ良かったですよね。あのラストの意味について考察してみたいです。",
-    commentCount: 18,
-    likeCount: 36,
-    date: "2024/12/21",
-    posterBg: "batman",
-  },
-];
-
-// 好きな映画データ
-const favoriteMovies: FavoriteMovie[] = [
-  { id: "m1", title: "君の名は。", posterBg: "kiminonawa" },
-  { id: "m2", title: "インセプション", posterBg: "inception" },
-  { id: "m3", title: "千と千尋の神隠し", posterBg: "chihiro" },
-  { id: "m4", title: "ラ・ラ・ランド", posterBg: "lalaland" },
-];
-
-// 最近のアクティビティデータ
-const recentActivities: ActivityItem[] = [
-  {
-    id: "a1",
-    iconBg: "lalaland",
-    title: "「ラ・ラ・ランド」の掲示板にコメントしました",
-    timeAgo: "2時間前",
-  },
-  {
-    id: "a2",
-    iconBg: "kiminonawa",
-    title: "「君の名は。」の掲示板を立てました",
-    timeAgo: "1日前",
-  },
-  {
-    id: "a3",
-    iconBg: "avatar",
-    title: "ユーザー まいさんをフォローしました",
-    timeAgo: "2日前",
-  },
-];
+const favoriteMovies: FavoriteMovie[] = [];
+const recentActivities: ActivityItem[] = [];
 
 export type AccountViewProps = {
   initialProfile: UserProfile;
+  posts?: UserPost[];
+  postsError?: string;
 };
 
-export function AccountView({ initialProfile }: AccountViewProps) {
+export function AccountView({ initialProfile, posts = [], postsError }: AccountViewProps) {
   const [profile, setProfile] = useState<UserProfile>(initialProfile);
   const [activeTab, setActiveTab] = useState<"posts" | "favorites">("posts");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   // 編集フォーム状態
   const [editForm, setEditForm] = useState({
@@ -144,6 +54,7 @@ export function AccountView({ initialProfile }: AccountViewProps) {
   });
 
   const handleOpenEdit = () => {
+    setProfileError(null);
     setEditForm({
       nickname: profile.nickname,
       bio: profile.bio,
@@ -160,23 +71,15 @@ export function AccountView({ initialProfile }: AccountViewProps) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
+    setProfileError(null);
     startTransition(async () => {
-      const res = await updateProfile(formData);
-      if (res.success) {
-        setProfile((prev) => ({
-          ...prev,
-          nickname: (formData.get("nickname") as string) || prev.nickname,
-          bio: (formData.get("bio") as string) || prev.bio,
-          gender: (formData.get("gender") as string) || prev.gender,
-          birthDate: (formData.get("birthDate") as string) || prev.birthDate,
-          location: (formData.get("location") as string) || prev.location,
-          favoriteGenres: (formData.get("favoriteGenres") as string) || prev.favoriteGenres,
-          motto: (formData.get("motto") as string) || prev.motto,
-        }));
-        setIsEditModalOpen(false);
-      } else {
-        alert(res.error || "プロフィールの更新に失敗しました。");
-      }
+      try {
+        const res = await updateProfile(formData);
+        if (res.success && res.profile) {
+          setProfile(res.profile);
+          setIsEditModalOpen(false);
+        } else setProfileError(res.error || "プロフィールを保存できませんでした。");
+      } catch { setProfileError("通信に失敗しました。入力内容はそのままで、もう一度保存をお試しください。"); }
     });
   };
 
@@ -269,25 +172,21 @@ export function AccountView({ initialProfile }: AccountViewProps) {
           {/* タブコンテンツ */}
           {activeTab === "posts" ? (
             <div className={styles.postList}>
-              {initialPosts.map((post) => (
+              {postsError && <p role="alert">{postsError}</p>}
+              {!postsError && posts.length === 0 && <p>まだ会話への投稿はありません。</p>}
+              {posts.map((post) => (
                 <article key={post.id} className={styles.postCard}>
                   <div className={styles.postPoster}>
                     {renderPoster(post.posterBg, styles.postPoster)}
                   </div>
                   <div className={styles.postMain}>
                     <div className={styles.postHeaderRow}>
-                      <h2 className={styles.postTitle}>{post.title}</h2>
+                      <h2 className={styles.postTitle}><Link href={`/boards/${post.boardId}`}>{post.title}</Link></h2>
                       <span className={styles.postBadge}>{post.tag}</span>
                     </div>
                     <p className={styles.postContent}>{post.content}</p>
                     <div className={styles.postFooter}>
                       <div className={styles.postMetaLeft}>
-                        <span className={styles.metaItem}>
-                          <MessageCircleIcon /> {post.commentCount}
-                        </span>
-                        <span className={styles.metaItem}>
-                          <HeartIcon /> {post.likeCount}
-                        </span>
                         <span>{post.date}</span>
                       </div>
                       <ChevronRightIcon className={styles.postArrow} />
@@ -352,6 +251,7 @@ export function AccountView({ initialProfile }: AccountViewProps) {
                 もっと見る <ChevronRightIcon />
               </Link>
             </div>
+            <p>お気に入り機能は準備中です。</p>
             <div className={styles.movieGrid}>
               {favoriteMovies.map((movie) => (
                 <div key={movie.id} className={styles.movieGridItem}>
@@ -367,6 +267,7 @@ export function AccountView({ initialProfile }: AccountViewProps) {
           {/* 最近のアクティビティ */}
           <div className={styles.sidebarCard}>
             <h2 className={styles.sidebarCardTitle}>最近のアクティビティ</h2>
+            <p>会話への投稿は「投稿一覧」で確認できます。</p>
             <div className={styles.activityList}>
               {recentActivities.map((act) => (
                 <div key={act.id} className={styles.activityItem}>
@@ -391,9 +292,9 @@ export function AccountView({ initialProfile }: AccountViewProps) {
       {/* 3. プロフィール編集モーダル */}
       {isEditModalOpen && (
         <div className={styles.modalBackdrop} onClick={() => setIsEditModalOpen(false)}>
-          <div className={styles.modalBox} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.modalBox} role="dialog" aria-modal="true" aria-labelledby="profile-edit-title" onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>プロフィールを編集</h3>
+              <h3 id="profile-edit-title" className={styles.modalTitle}>プロフィールを編集</h3>
               <button
                 type="button"
                 className={styles.closeButton}
@@ -405,11 +306,13 @@ export function AccountView({ initialProfile }: AccountViewProps) {
             </div>
 
             <form onSubmit={handleSaveProfile} className={styles.modalForm}>
+              {profileError && <p role="alert" style={{color: "#b91c1c"}}>{profileError}</p>}
               <div className={styles.formField}>
                 <label className={styles.fieldLabel} htmlFor="edit-nickname">ニックネーム</label>
                 <input
                   id="edit-nickname"
                   name="nickname"
+                  maxLength={40}
                   type="text"
                   required
                   value={editForm.nickname}
@@ -423,6 +326,7 @@ export function AccountView({ initialProfile }: AccountViewProps) {
                 <textarea
                   id="edit-bio"
                   name="bio"
+                  maxLength={1000}
                   value={editForm.bio}
                   onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
                   className={styles.textareaControl}
@@ -434,6 +338,7 @@ export function AccountView({ initialProfile }: AccountViewProps) {
                 <input
                   id="edit-gender"
                   name="gender"
+                  maxLength={30}
                   type="text"
                   value={editForm.gender}
                   onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
@@ -447,6 +352,7 @@ export function AccountView({ initialProfile }: AccountViewProps) {
                 <input
                   id="edit-birthDate"
                   name="birthDate"
+                  maxLength={10}
                   type="text"
                   value={editForm.birthDate}
                   onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })}
@@ -460,6 +366,7 @@ export function AccountView({ initialProfile }: AccountViewProps) {
                 <input
                   id="edit-location"
                   name="location"
+                  maxLength={80}
                   type="text"
                   value={editForm.location}
                   onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
@@ -473,6 +380,7 @@ export function AccountView({ initialProfile }: AccountViewProps) {
                 <input
                   id="edit-genres"
                   name="favoriteGenres"
+                  maxLength={200}
                   type="text"
                   value={editForm.favoriteGenres}
                   onChange={(e) => setEditForm({ ...editForm, favoriteGenres: e.target.value })}
@@ -486,6 +394,7 @@ export function AccountView({ initialProfile }: AccountViewProps) {
                 <input
                   id="edit-motto"
                   name="motto"
+                  maxLength={120}
                   type="text"
                   value={editForm.motto}
                   onChange={(e) => setEditForm({ ...editForm, motto: e.target.value })}

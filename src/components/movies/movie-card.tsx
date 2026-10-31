@@ -30,6 +30,7 @@ export function MovieCard({ movie }: MovieCardProps) {
       </div>
       <div className={styles.cardBody}>
         <h3 className={styles.movieTitle}>{movie.title}</h3>
+        {movie.certification && <p className={styles.releaseDate}>年齢区分：{movie.certification}</p>}
         <p className={styles.releaseDate}>
           {movie.releaseDate ? <><time dateTime={movie.releaseDate}>{movie.releaseDate.replaceAll("-", "/")}</time> 公開</> : "公開日不明"}
         </p>

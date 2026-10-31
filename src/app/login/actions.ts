@@ -1,21 +1,16 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { safeAuthRedirect } from "@/lib/auth-redirect";
 
 export async function login(formData: FormData) {
   const email = formData.get("email");
   const password = formData.get("password");
   const requestedPath = formData.get("next");
 
-  // 今あるページだけを、戻り先として許可する。
-  const allowedPaths = ["/", "/account", "/?create=1"];
-
-  const next =
-    typeof requestedPath === "string" &&
-    allowedPaths.includes(requestedPath)
-      ? requestedPath
-      : "/account";
+  const next = safeAuthRedirect(requestedPath);
 
   // ログインに失敗しても、戻り先を維持する。
   const params = new URLSearchParams({
@@ -44,6 +39,7 @@ export async function login(formData: FormData) {
     redirect(errorUrl);
   }
 
+  revalidatePath("/", "layout");
   redirect(next);
 }
 
@@ -56,5 +52,6 @@ export async function logout(){
         throw new Error("ログアウトできませんでした。");
     }
 
+    revalidatePath("/", "layout");
     redirect("/login");
 }

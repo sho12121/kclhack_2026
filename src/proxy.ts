@@ -6,7 +6,8 @@ export async function proxy(request: NextRequest) {
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   if (!url || !key) {
-    throw new Error("Supabaseの環境変数が設定されていません。");
+    // 公開ページは閲覧可能にする。認証が必要なページでは別途接続を確認する。
+    return NextResponse.next({ request });
   }
 
   let response = NextResponse.next({ request });
@@ -45,8 +46,12 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
     "/login/:path*",
+    "/guest/:path*",
     "/account/:path*",
-    { source: "/", has: [{ type: "query", key: "create", value: "1" }] },
+    "/boards/:path*",
+    "/api/boards/:path*",
+    "/playground/:path*",
   ],
 };

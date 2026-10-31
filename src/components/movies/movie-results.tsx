@@ -34,8 +34,8 @@ export function MovieResults({ state, onSelect, selectedMovieId }: MovieResultsP
 
         {state.status === "success" && state.movies.length === 0 && (
           <div className={styles.message}>
-            <h2>作品が見つかりませんでした</h2>
-            <p>「{state.query}」の表記を変えるか、別のタイトルを試してみてください。</p>
+            <h2>表示できる作品がありません</h2>
+            <p>「{state.query}」の表記や年齢制限の設定を確認してください。</p>
           </div>
         )}
 

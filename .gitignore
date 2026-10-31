@@ -35,6 +35,7 @@ yarn-error.log*
 
 # Old prototype and local design notes stay in this checkout, outside Git.
 /mock_ver/
+/creation_UI/
 /docs/architecture.md
 /docs/team-development.md
 

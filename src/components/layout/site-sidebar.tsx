@@ -30,7 +30,6 @@ export function SiteSidebar({ active, onEditProfile }: SiteSidebarProps) {
       </nav>
       <div className={styles.sidebarFooter}>
         <CameraProjectorWatermark />
-        <p>好きな映画の話で、<br />もっと広がる世界を。</p>
       </div>
     </aside>
   );

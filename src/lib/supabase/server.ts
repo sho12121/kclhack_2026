@@ -3,8 +3,9 @@ import "server-only";
 
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { cache } from "react";
 
-export async function createClient() {
+export const createClient = cache(async function createClient() {
   const cookieStore = await cookies(); //今回のアクセスで送られてきたCookieを扱う
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -15,6 +16,8 @@ export async function createClient() {
   }
 
   return createServerClient(url, key, { //Supabaseを操作するオブジェクトを作る
+    // 読み取りの再試行はreadDatabaseで1回だけ行う。SDKとの二重再試行を防ぐ。
+    db: { retry: false, timeout: 10_000 },
     cookies: {
       getAll() {  //SupabaseへCookieを渡す
         return cookieStore.getAll();
@@ -26,9 +29,15 @@ export async function createClient() {
           });
         } catch {
           // Server ComponentではCookieを書き換えられない。
-          // 後で追加するProxy側で更新を担当する。
+          // Proxy側で更新を担当する。
         }
       },
     },
   });
-}
+});
+
+// Reactの1回の描画中だけ共有する。別リクエストや別ユーザーとは共有しない。
+export const getAuth = cache(async function getAuth() {
+  const supabase = await createClient();
+  return { supabase, ...await supabase.auth.getClaims() };
+});

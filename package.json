@@ -4,12 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "node --import ./scripts/dev-network.mjs ./node_modules/next/dist/bin/next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "node --conditions=react-server --experimental-strip-types --test tests/*.test.ts"
+    "test": "node --conditions=react-server --experimental-strip-types --test tests/*.test.*"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

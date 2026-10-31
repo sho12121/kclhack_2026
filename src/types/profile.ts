@@ -15,6 +15,7 @@ export type UserProfile = {
 
 export type UserPost = {
   id: string;
+  boardId?: string;
   movieTitle: string;
   tag: string;
   title: string;

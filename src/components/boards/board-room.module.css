@@ -1,0 +1,26 @@
+.room { max-width: 900px; margin: 0 auto; padding: 24px 16px 48px; overflow-wrap: anywhere; }
+.heading, .panel { margin-top: 20px; padding: 24px; background: white; border: 1px solid var(--line); border-radius: 16px; min-width: 0; }
+.heading h1 { margin: 12px 0; font-size: clamp(22px, 4vw, 30px); }
+.status { padding: 5px 10px; border-radius: 6px; background: #eff6ff; color: #1d4ed8; font-size: 13px; font-weight: 700; }
+.movie { font-weight: 600; color: #334155; }
+.info { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 0; }
+.info dt { color: var(--muted); font-size: 13px; }
+.info dd { margin: 6px 0 0; font-size: 17px; font-weight: 700; }
+.panel h2 { margin-top: 0; font-size: 20px; }
+.room button { border: 1px solid #2563eb; border-radius: 8px; padding: 12px 18px; font: inherit; font-weight: 600; background: #2563eb; color: white; }
+.room button:disabled { background: #e2e8f0; border-color: #cbd5e1; color: #475569; cursor: not-allowed; }
+.room .secondary { background: white; color: #1d4ed8; padding: 6px 10px; font-size: 13px; }
+.messages { max-height: 55vh; min-height: 180px; overflow-y: auto; overscroll-behavior: contain; margin: 16px 0 24px; padding: 4px; }
+.message { padding: 14px; margin: 12px 0; border-radius: 10px; background: #f1f5f9; }
+.message.own { background: #eff6ff; }
+.messageMeta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 13px; color: #334155; }
+.messageMeta time { color: var(--muted); font-size: 12px; }
+.message p { white-space: pre-wrap; overflow-wrap: anywhere; margin: 10px 0 0; line-height: 1.8; }
+.empty { color: var(--muted); line-height: 1.8; }
+.form { display: grid; gap: 10px; }
+.form label { font-weight: 600; }
+.form textarea { width: 100%; min-width: 0; border: 1px solid #64748b; border-radius: 8px; padding: 12px; background: white; color: var(--ink); resize: vertical; }
+.formFooter { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center; }
+.formFooter span { color: var(--muted); font-size: 13px; }
+.error { color: #b91c1c; line-height: 1.8; }
+@media (max-width: 600px) { .heading, .panel { padding: 18px; } .formFooter button { width: 100%; } }

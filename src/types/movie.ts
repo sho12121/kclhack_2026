@@ -1,9 +1,13 @@
+export type MovieCertification = "G" | "PG12" | "R15+" | "R18+";
+
 /** TMDbのレスポンスそのものではなく、画面が必要とする映画データ。 */
 export type Movie = {
   tmdbId: number;
   title: string;
   releaseDate: string | null;
   posterUrl: string | null;
+  certification?: MovieCertification;
+  genres?: string[];
 };
 
 export type MovieSearchResponse = { results: Movie[] };

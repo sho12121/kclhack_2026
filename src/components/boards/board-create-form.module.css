@@ -1,0 +1,1156 @@
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.heading h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.closeLink {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  transition: all 0.2s ease;
+}
+
+.closeLink:hover {
+  color: var(--ink);
+  border-color: var(--accent);
+  background: var(--soft);
+}
+
+.intro {
+  margin-bottom: 32px;
+}
+
+.intro p {
+  color: var(--muted);
+}
+
+.panelDescription {
+  margin: 0 0 24px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ボタン */
+.primary, .secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.primary {
+  background: var(--accent);
+  color: var(--surface);
+  border: 1px solid var(--accent);
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15);
+}
+
+.primary:hover:not(:disabled) {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.secondary {
+  background: white;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+.secondary:hover {
+  border-color: var(--accent);
+  background: var(--soft);
+}
+
+.secondarySmall {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.secondarySmall:hover {
+  background: var(--accent);
+  color: var(--surface);
+  border-color: var(--accent);
+}
+
+/* パネル */
+.panel, .empty {
+  margin-bottom: 32px;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.04);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.empty {
+  text-align: center;
+  padding: 48px 20px;
+}
+
+.empty p {
+  color: var(--muted);
+}
+
+/* フォームフィールド */
+.field {
+  display: grid;
+  gap: 8px;
+  margin: 24px 0;
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.labelRow label {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.requiredBadge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #eff6ff;
+  color: var(--accent);
+}
+
+.field input {
+  width: 100%;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  outline: none;
+}
+
+.field input::placeholder {
+  color: #9ba39c;
+}
+
+.fieldHelp {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.fieldError {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-top: 4px;
+}
+
+/* 定員（スライダー・ステッパー・テキスト入力） */
+.capacityControl {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.stepperGroup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.stepButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: white;
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.stepButton:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--surface);
+}
+
+.stepButton:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: var(--line);
+  background: #f1f5f9;
+}
+
+.capacityInputWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.capacityInput {
+  width: 88px !important;
+  text-align: center;
+  font-size: 22px !important;
+  font-weight: 800;
+  padding: 8px 10px !important;
+  border-radius: 8px;
+}
+
+.capacityInput[aria-invalid="true"] {
+  border-color: var(--accent) !important;
+  background: #fff6f4 !important;
+}
+
+.capacityUnit {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.sliderWrap {
+  display: grid;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.capacitySlider {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: #e3e2d8;
+  outline: none;
+  cursor: pointer;
+  accent-color: var(--ink);
+  padding: 0 !important;
+  border: none !important;
+}
+
+.sliderLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* 開始日時セクション */
+.dateTimeSection {
+  display: grid;
+  gap: 20px;
+  padding: 22px;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+/* 日付選択エリア */
+.dateSelectBlock {
+  display: grid;
+  gap: 12px;
+  background: white;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.dateBlockHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.blockTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* かんたん日数指定バー */
+.quickDaysBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.quickDaysInput {
+  width: 64px !important;
+  text-align: center;
+  padding: 6px 8px !important;
+  font-size: 14px !important;
+  font-weight: 700;
+}
+
+.quickDaysBtn {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--surface);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quickDaysBtn:hover {
+  background: #1d4ed8;
+}
+
+/* クイック選択チップ */
+.quickChipsList {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.quickChipsLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.chipBtn {
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--soft);
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chipBtn:hover {
+  border-color: var(--accent);
+  background: #dbeafe;
+}
+
+.chipBtnActive {
+  background: var(--accent) !important;
+  color: var(--surface) !important;
+  border-color: var(--accent) !important;
+}
+
+/* 日付ステッパー＆カレンダーカード */
+.dateStepperCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.dateNavBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: white;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.dateNavBtn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--surface);
+}
+
+.dateNavBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: #f1f5f9;
+}
+
+.dateCenterDisplay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.dateMainText {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+
+.dateSubBadge {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1d4ed8;
+  background: #eff6ff;
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+
+/* カレンダー直接選択用 */
+.calendarPickerWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.calendarPickerWrap label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.calendarDateInput {
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  border-radius: 6px !important;
+  background: white;
+  color: var(--ink);
+  cursor: pointer;
+  flex: 1;
+}
+
+/* 時刻選択エリア（時間と分が2つに分かれ、それぞれドロップダウンと入力が1つに統合） */
+.timeSelectBlock {
+  display: grid;
+  gap: 12px;
+  background: white;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.timeInputsRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.timeSeparator {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--ink);
+  user-select: none;
+  line-height: 1;
+}
+
+/* コンボボックス（統合入力UI） */
+.comboContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.comboUnitLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.comboInputBox {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  width: 96px;
+}
+
+.comboInputBox:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.comboInput {
+  width: 60px !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 10px 8px !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  text-align: center;
+  color: var(--ink);
+  background: transparent;
+  outline: none !important;
+}
+
+.comboArrowBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 42px;
+  background: #f8fafc;
+  border: none;
+  border-left: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  padding: 0;
+}
+
+.comboArrowBtn:hover {
+  background: var(--soft);
+}
+
+/* ドロップダウンメニュー */
+.comboDropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 140px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  list-style: none;
+  padding: 4px;
+  margin: 0;
+  z-index: 50;
+}
+
+.comboOption {
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.comboOption:hover {
+  background: var(--soft);
+}
+
+.comboOptionSelected {
+  background: #eff6ff;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+/* 設定中サマリー */
+.dateTimeSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--ink);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dateTimeSummaryText {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.dateTimeRangeNotice {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* 映画選択セクション */
+.moviePicker {
+  min-width: 0;
+  margin: 28px 0;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 0 8px;
+  color: var(--ink);
+}
+
+/* 映画選択完了カード */
+.selectedMovieCard {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.05);
+}
+
+.selectedPosterWrapper {
+  position: relative;
+  width: 88px;
+  aspect-ratio: 2 / 3;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.selectedPosterImg {
+  object-fit: cover;
+}
+
+.selectedPosterPlaceholder {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #697a6e;
+  font-size: 9px;
+  letter-spacing: .1em;
+  background: var(--soft);
+}
+
+.placeholderIcon {
+  font-size: 26px;
+}
+
+.placeholderText {
+  font-weight: 700;
+}
+
+.selectedMovieInfo {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  flex: 1;
+}
+
+.selectedStatusRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.selectedBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: var(--accent);
+  color: var(--surface);
+}
+
+.selectedReleaseDate {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.selectedMovieTitle {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.selectedLabelText {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.selectedMovieActions {
+  display: flex;
+  align-items: center;
+}
+
+/* 映画未選択ボックス */
+.unselectedMovieBox {
+  padding: 24px 20px;
+  border: 1px dashed #b9bfb5;
+  border-radius: 10px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.unselectedContent {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.unselectedIcon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.unselectedText {
+  margin: 0;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.unselectedSubtext {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* 映画検索ドロワー */
+.searchContainer {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.searchInner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.searchHeader h4 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.searchHeader p {
+  margin: 0 0 16px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* アクションボタン */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.cancelLink {
+  padding: 10px 16px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.cancelLink:hover {
+  color: var(--ink);
+}
+
+/* エラー表示 */
+.error {
+  color: var(--accent);
+}
+
+.errorAlert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  background: #fff3ed;
+  border: 1px solid #d7a28e;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.errorIcon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.errorText {
+  margin: 0;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* 確認プレビュー */
+.preview {
+  margin-top: 36px;
+  padding: 24px;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.previewHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.previewHeader h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.previewBadge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: var(--surface);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.previewStatus {
+  margin: 0 0 18px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.previewList {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 16px 20px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+}
+
+.previewItem {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.previewItem dt {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.previewItem dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.previewTitleValue {
+  font-weight: 600;
+}
+
+.previewMovieValue {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.previewPosterWrapper {
+  position: relative;
+  width: 44px;
+  aspect-ratio: 2 / 3;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.previewPosterImg {
+  object-fit: cover;
+}
+
+.previewMovieText {
+  display: flex;
+  flex-direction: column;
+}
+
+.previewMovieDate {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: normal;
+}
+
+/* 一覧リスト */
+.list {
+  list-style: none;
+  padding: 0;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 600px) {
+  .panel {
+    padding: 18px 16px;
+    border-radius: 10px;
+  }
+
+  .moviePicker {
+    padding: 14px;
+    margin: 20px 0;
+  }
+
+  .selectedMovieCard {
+    padding: 12px 14px;
+    gap: 14px;
+  }
+
+  .selectedPosterWrapper {
+    width: 74px;
+  }
+
+  .selectedMovieTitle {
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+
+  .unselectedMovieBox {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 18px 14px;
+    text-align: center;
+  }
+
+  .unselectedContent {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .dateStepperCard {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .dateCenterDisplay {
+    order: -1;
+    width: 100%;
+    margin-bottom: 6px;
+  }
+
+  .dateNavBtn {
+    flex: 1;
+  }
+
+  .timeInputsRow {
+    gap: 10px;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .primary, .secondary {
+    width: 100%;
+  }
+
+  .cancelLink {
+    text-align: center;
+  }
+
+  .previewList {
+    padding: 14px;
+  }
+
+  .previewItem {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
+/* 作成画面専用。掲示板一覧の共通CSSには影響させない。 */
+.fieldError, .errorText { color: #b91c1c; }
+.panel { border-radius: 16px; }
+.primary { gap: 8px; }
+.quickDaysBtn:disabled { opacity: .5; cursor: not-allowed; }
+.calendarDateInput { min-width: 0; }
+.quickDaysBar { flex-wrap: wrap; }
+.dateBlockHeader { flex-wrap: wrap; }
+@media (max-width: 600px) {
+  .dateTimeSection { padding: 12px; gap: 14px; }
+  .dateSelectBlock { padding: 12px; }
+  .dateStepperCard { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; padding: 12px 8px; }
+  .dateCenterDisplay { grid-column: 1 / -1; order: -1; width: auto; }
+  .dateNavBtn { min-width: 0; width: 100%; padding: 8px 4px; font-size: 12px; }
+  .calendarPickerWrap { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .calendarDateInput { width: 100%; }
+  .dateMainText { font-size: 16px; }
+  .timeSelectBlock { padding: 14px 10px; }
+  .timeInputsRow { gap: 6px; }
+  .comboInputBox { width: 76px; }
+  .comboInput { width: 44px !important; }
+  .comboArrowBtn { width: 30px; }
+  .comboUnitLabel { font-size: 12px; }
+  .timeSeparator { font-size: 18px; }
+}
+@media (max-width: 400px) {
+  .selectedMovieCard { flex-direction: column; align-items: stretch; }
+  .selectedPosterWrapper { margin: 0 auto; }
+  .selectedMovieActions .secondarySmall { width: 100%; }
+}
+
+.unlimitedOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+  cursor: pointer;
+}
+.unlimitedOption input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: #2563eb;
+}
+.capacityFields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.capacityFields:disabled { opacity: 0.5; }
+.chipBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+
+.dateAdjustGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: 8px;
+}
+.dateAdjustPair {
+  display: grid;
+  gap: 8px;
+}
+.dateAdjustPair .chipBtn {
+  min-width: 0;
+  padding-inline: 6px;
+  white-space: nowrap;
+}

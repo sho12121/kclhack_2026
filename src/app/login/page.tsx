@@ -1,4 +1,6 @@
 import { login } from "./actions";
+import Link from "next/link";
+import { safeAuthRedirect } from "@/lib/auth-redirect";
 
 type LoginPageProps = {
   searchParams: Promise<{
@@ -12,7 +14,7 @@ export default async function LoginPage({
 }: LoginPageProps) {
   const params = await searchParams; //searchParams で受け取り、params.next で取り出している。
   //paramsの内容 ⇒ { next: "/account" }
-  const next = typeof params.next === "string" ? params.next : "/account";
+  const next = safeAuthRedirect(params.next);
 
   return (
     <section className="auth-card">
@@ -50,6 +52,7 @@ export default async function LoginPage({
           </p>
         )}
       </form>
+      <p><Link href={`/guest?${new URLSearchParams({ next: next === "/account" ? "/?create=1" : next })}`}>登録せずゲストで利用する</Link></p>
     </section>
   );
 }

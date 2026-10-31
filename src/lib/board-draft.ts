@@ -9,8 +9,20 @@ export type BoardDraftInput = {
   title: string;
   movie: Movie | null;
   capacity: string;
-  endDateTime: string;
+  startDateTime: string;
 };
+
+export function validateBoardStartDateTime(value: string, now = Date.now()): string | null {
+  const timestamp = Date.parse(`${value}:00+09:00`);
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value) || !Number.isFinite(timestamp)) {
+    return "掲示板の開始日時を入力してください。";
+  }
+  const japanDateTime = new Date(timestamp + 9 * 60 * 60 * 1000).toISOString().slice(0, 16);
+  if (japanDateTime !== value || timestamp <= now) {
+    return "掲示板の開始日時には、未来の有効な日時を指定してください。";
+  }
+  return null;
+}
 
 /** datetime-localの値は端末の地域設定によらず、日本時間として解釈する。 */
 export function validateBoardDraft(
@@ -25,24 +37,18 @@ export function validateBoardDraft(
     return { draft: null, error: "話したい映画を検索して選択してください。" };
   }
 
-  const capacity = Number(input.capacity);
-  if (!Number.isInteger(capacity) || capacity < MIN_BOARD_CAPACITY || capacity > MAX_BOARD_CAPACITY) {
+  const capacity = input.capacity === "unlimited" ? null : Number(input.capacity);
+  if (capacity !== null && (!Number.isInteger(capacity) || capacity < MIN_BOARD_CAPACITY || capacity > MAX_BOARD_CAPACITY)) {
     return { draft: null, error: `定員は${MIN_BOARD_CAPACITY}〜${MAX_BOARD_CAPACITY}人で入力してください。` };
   }
 
-  const timestamp = Date.parse(`${input.endDateTime}:00+09:00`);
-  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(input.endDateTime) || !Number.isFinite(timestamp)) {
-    return { draft: null, error: "掲示板の終了日時を入力してください。" };
-  }
-  // 2月30日など、Dateが自動補正する存在しない日時も拒否する。
-  const japanDateTime = new Date(timestamp + 9 * 60 * 60 * 1000).toISOString().slice(0, 16);
-  if (japanDateTime !== input.endDateTime || timestamp <= now) {
-    return { draft: null, error: "掲示板の終了日時には、未来の有効な日時を指定してください。" };
-  }
+  const dateError = validateBoardStartDateTime(input.startDateTime, now);
+  if (dateError) return { draft: null, error: dateError };
+  const timestamp = Date.parse(`${input.startDateTime}:00+09:00`);
 
   return {
     error: null,
-    draft: { title, movie: input.movie, capacity, endsAt: new Date(timestamp).toISOString() },
+    draft: { title, movie: input.movie, capacity, startsAt: new Date(timestamp).toISOString() },
   };
 }
 
@@ -50,4 +56,22 @@ export function formatBoardDate(value: string) {
   return new Intl.DateTimeFormat("ja-JP", {
     timeZone: "Asia/Tokyo", dateStyle: "medium", timeStyle: "short", hourCycle: "h23",
   }).format(new Date(value));
+}
+
+/** 選択日を基準に加減する。月末からの月移動は移動先の月末に合わせる。 */
+export function shiftBoardDate(value: string, amount: number, unit: "days" | "months"): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || !Number.isInteger(amount)) return null;
+  const date = new Date(`${value}T00:00:00Z`);
+  if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== value) return null;
+  if (unit === "days") date.setUTCDate(date.getUTCDate() + amount);
+  else {
+    const day = date.getUTCDate();
+    date.setUTCDate(1);
+    date.setUTCMonth(date.getUTCMonth() + amount);
+    const lastDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
+    date.setUTCDate(Math.min(day, lastDay));
+  }
+  if (!Number.isFinite(date.getTime())) return null;
+  const result = date.toISOString().slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(result) ? result : null;
 }

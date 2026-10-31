@@ -2,9 +2,10 @@
   --paper: #f1f5f9;
   --surface: #ffffff;
   --ink: #1e293b;
-  --muted: #64748b;
+  --muted: #475569;
   --line: #e2e8f0;
   --accent: #2563eb;
+  --accent-strong: #1d4ed8;
   --soft: #f8fafc;
 }
 
@@ -47,3 +48,6 @@ h1 { font-size: 30px; line-height: 1.5; margin: 0 0 20px; }
   .auth-card { margin: 28px 16px; padding: 24px; }
   .site-footer { padding: 24px 16px; }
 }
+
+.guest-note { font-size: 13px; color: #475569; line-height: 1.8; }
+.auth-card a { color: #1d4ed8; }

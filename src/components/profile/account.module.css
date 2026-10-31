@@ -122,7 +122,7 @@
   display: flex;
   gap: 20px;
   font-size: 13px;
-  color: #64748b;
+  color: var(--muted);
   margin-top: 4px;
 }
 
@@ -148,7 +148,7 @@
   padding: 14px 4px;
   font-size: 14px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--muted);
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
@@ -225,7 +225,7 @@
 .postBadge {
   font-size: 11px;
   font-weight: 600;
-  color: #0284c7;
+  color: #0369a1;
   background-color: #e0f2fe;
   padding: 2px 8px;
   border-radius: 9999px;
@@ -249,7 +249,7 @@
   justify-content: space-between;
   margin-top: 4px;
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--muted);
 }
 
 .postMetaLeft {
@@ -265,7 +265,7 @@
 }
 
 .postArrow {
-  color: #cbd5e1;
+  color: var(--muted);
 }
 
 /* 右サイドバー */
@@ -329,13 +329,13 @@
 }
 
 .summaryIcon {
-  color: #64748b;
+  color: var(--muted);
   margin-top: 2px;
   flex-shrink: 0;
 }
 
 .summaryLabel {
-  color: #64748b;
+  color: var(--muted);
   width: 80px;
   flex-shrink: 0;
 }
@@ -427,7 +427,7 @@
 
 .activityTime {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--muted);
 }
 
 /* モーダル */
@@ -472,7 +472,7 @@
   background: none;
   border: none;
   font-size: 22px;
-  color: #94a3b8;
+  color: var(--muted);
   cursor: pointer;
   padding: 4px;
   line-height: 1;

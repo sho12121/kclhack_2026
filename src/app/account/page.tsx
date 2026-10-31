@@ -1,84 +1,31 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getAuth } from "@/lib/supabase/server";
 import { AccountView } from "@/components/profile/account-view";
-import { UserProfile } from "@/types/profile";
+import { profileFromRow } from "@/lib/profile";
+import { databaseError } from "@/lib/database-error";
+import { readDatabase } from "@/lib/database-read";
+import { formatBoardDate } from "@/lib/board-draft";
+import type { UserPost } from "@/types/profile";
 
 export default async function AccountPage() {
-  const supabase = await createClient();
-
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
-  const userId = claimsData?.claims.sub;
-
-  if (claimsError || !userId) {
-    redirect("/login?next=/account");
-  }
-
-  // 1. Supabase Authからユーザー情報とメタデータを取得
-  const { data: authData } = await supabase.auth.getUser();
-  const metadata = authData?.user?.user_metadata || {};
-
-  // 2. profilesテーブルからの取得を試みる（テーブル作成済みの場合に連携）
-  let dbProfile: Record<string, string | number | null | undefined> | null = null;
-  try {
-    const { data: profileRecord } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .maybeSingle();
-    dbProfile = profileRecord as Record<string, string | number | null | undefined> | null;
-  } catch {
-    // profilesテーブル未作成や通信エラー時はmetadataおよびデフォルト値へフォールバック
-    dbProfile = null;
-  }
-
-  // 3. プロフィール初期値を組み立て（DB値 > Auth metadata > 画像の初期デザイン値）
-  const initialProfile: UserProfile = {
-    id: userId,
-    nickname:
-      dbProfile?.nickname ||
-      dbProfile?.display_name ||
-      metadata.nickname ||
-      metadata.displayName ||
-      "たかし",
-    bio:
-      dbProfile?.bio ||
-      metadata.bio ||
-      "映画で人生をちょっと豊かに。\n邦画も洋画も好きです。特に人間ドラマや青春映画が好きです。\n最近は、映画をきっかけにいろんな人と話してみたいと思っています。\nよろしくお願いします！",
-    gender:
-      dbProfile?.gender ||
-      metadata.gender ||
-      "男性",
-    birthDate:
-      dbProfile?.birth_date ||
-      metadata.birthDate ||
-      "2005/04/12",
-    location:
-      dbProfile?.location ||
-      metadata.location ||
-      "福岡",
-    favoriteGenres:
-      dbProfile?.favorite_genres ||
-      metadata.favoriteGenres ||
-      "邦画 / 洋画 / アニメ / ドラマ",
-    motto:
-      dbProfile?.motto ||
-      metadata.motto ||
-      "映画で出会った感動を誰かと共有したいです！",
-    avatarUrl: dbProfile?.avatar_url || metadata.avatarUrl,
-    coverUrl: dbProfile?.cover_url || metadata.coverUrl,
-    followCount:
-      typeof dbProfile?.follow_count === "number"
-        ? dbProfile.follow_count
-        : typeof metadata.followCount === "number"
-        ? metadata.followCount
-        : 32,
-    followerCount:
-      typeof dbProfile?.follower_count === "number"
-        ? dbProfile.follower_count
-        : typeof metadata.followerCount === "number"
-        ? metadata.followerCount
-        : 48,
-  };
-
-  return <AccountView initialProfile={initialProfile} />;
+  const { supabase, data: claims, error: authError } = await getAuth();
+  const id = claims?.claims.sub;
+  if (authError || !id || claims.claims.is_anonymous === true) redirect("/login?next=/account");
+  const [{ data: row, error }, { data: messages, error: postsError }] = await Promise.all([
+    readDatabase(() => supabase.from("profiles").select("*").eq("id", id).maybeSingle()),
+    readDatabase(() => supabase.from("messages")
+      .select("id::text,board_id,content,created_at,boards(title,movie_title)")
+      .eq("author_id", id).order("id", { ascending: false }).limit(50)),
+  ]);
+  if (error) return <section className="auth-card"><h1>プロフィールを読み込めませんでした</h1><p role="alert">{databaseError(error).message}</p><Link href="/">掲示板一覧へ</Link></section>;
+  // 旧プロフィールの表示補助には検証済みJWT内のmetadataを使い、Auth APIへの追加通信を省く。
+  const metadata = claims.claims.user_metadata;
+  const profile = profileFromRow(id, row, metadata && typeof metadata === "object" ? metadata : undefined);
+  const posts: UserPost[] = (messages ?? []).map(value => {
+    const board = Array.isArray(value.boards) ? value.boards[0] : value.boards;
+    return { id: String(value.id), boardId: value.board_id, movieTitle: board?.movie_title ?? "映画", title: board?.title ?? "掲示板",
+      tag: "会話への投稿", content: value.content, date: formatBoardDate(value.created_at), posterBg: "", commentCount: 0, likeCount: 0 };
+  });
+  return <AccountView initialProfile={profile} posts={posts} postsError={postsError ? databaseError(postsError).message : undefined} />;
 }

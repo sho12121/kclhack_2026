@@ -14,10 +14,12 @@ import { MovieResults } from "./movie-results";
 export type MovieSearchProps = {
   onSelect?: (movie: Movie) => void;
   selectedMovieId?: number;
+  onRestrictedChange?: (value: boolean) => void;
 };
 
-export function MovieSearch({ onSelect, selectedMovieId }: MovieSearchProps = {}) { //この関数が、page.tsxで読み込んだMovieSearchコンポーネント
+export function MovieSearch({ onSelect, selectedMovieId, onRestrictedChange }: MovieSearchProps = {}) { //この関数が、page.tsxで読み込んだMovieSearchコンポーネント
   const [state, setState] = useState<MovieSearchState>({ status: "idle" });
+  const [includeRestricted, setIncludeRestricted] = useState(false);
   //このstateをreturn内で子のSearchFormコンポーネントに渡している。初期値は"idle"
 // "idle"	まだ検索していない
 // "loading"	検索を始めて、結果を待っている
@@ -29,14 +31,14 @@ export function MovieSearch({ onSelect, selectedMovieId }: MovieSearchProps = {}
   // ページを離れたら、不要になったブラウザ側の通信を止める。
   useEffect(() => () => activeRequest.current?.abort(), []);
 
-  async function handleSearch(query: string) {
+  async function handleSearch(query: string, showRestricted = includeRestricted) {
     activeRequest.current?.abort();
     const controller = new AbortController();
     activeRequest.current = controller;
     setState({ status: "loading", query });
 
     try {
-      const params = new URLSearchParams({ query });
+      const params = new URLSearchParams({ query, include_restricted: String(showRestricted) });
       const response = await fetch(`/api/movies/search?${params}`, {
         signal: controller.signal,
         cache: "no-store",
@@ -65,9 +67,16 @@ export function MovieSearch({ onSelect, selectedMovieId }: MovieSearchProps = {}
     }
   }
 
+  function handleRestrictedChange(value: boolean) {
+    setIncludeRestricted(value);
+    onRestrictedChange?.(value);
+    if (state.status !== "idle") void handleSearch(state.query, value);
+  }
+
   return (
     <>
-      <SearchForm onSearch={handleSearch} isLoading={state.status === "loading"} />
+      <SearchForm onSearch={handleSearch} isLoading={state.status === "loading"}
+        includeRestricted={includeRestricted} onRestrictedChange={handleRestrictedChange} />
       {/* handleSearchはこのMovieSearch関数内にある関数で、それを子であるSearchFormコンポーネントに渡している。 */}
       {/*state.status=== "loading" で、stateという変数にstatus要素を見て、検索中かどうかを調べる→trueかfalseを渡す */}
       <MovieResults state={state} onSelect={onSelect} selectedMovieId={selectedMovieId} />

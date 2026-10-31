@@ -70,6 +70,10 @@
   margin: 10px 0 0;
 }
 
+.restrictionSetting { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.restrictionLabel { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; cursor: pointer; }
+.restrictionLabel input { flex-shrink: 0; width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--accent); }
+
 @media (max-width: 600px) {
   .form {
     padding: 18px;
