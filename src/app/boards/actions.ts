@@ -28,22 +28,24 @@ export async function createBoard(form: FormData): Promise<{ id?: string; error?
     if (error || !data?.claims.sub) return { error: "ログインまたはゲスト利用を開始してください。" };
     const title = form.get("title"), capacity = form.get("capacity"), startDateTime = form.get("startDateTime"), requestId = form.get("requestId");
     const tmdbId = Number(form.get("tmdbId"));
+    const spoilerSetting = form.get("hasSpoilers");
+    if (spoilerSetting !== "true" && spoilerSetting !== "false") return { error: "ネタバレ注意の設定を確認してください。" };
     const guestSetting = form.get("allowGuests");
     if (guestSetting !== "true" && guestSetting !== "false") return { error: "ゲストの参加設定を確認してください。" };
     if (guestSetting === "false" && data.claims.is_anonymous === true) return { error: "ゲストとして作成する場合は、ゲストユーザーの参加を受け入れてください。" };
     if (typeof title !== "string" || typeof capacity !== "string" || typeof startDateTime !== "string" || !isUuid(requestId) || !Number.isSafeInteger(tmdbId) || tmdbId <= 0) return { error: "入力内容を確認してください。" };
-    const input = validateBoardDraft({ title, capacity, startDateTime, allowGuests: guestSetting === "true", movie: { tmdbId, title: "選択映画", releaseDate: null, posterUrl: null } });
+    const input = validateBoardDraft({ title, capacity, startDateTime, allowGuests: guestSetting === "true", hasSpoilers: spoilerSetting === "true", movie: { tmdbId, title: "選択映画", releaseDate: null, posterUrl: null } });
     if (!input.draft) return { error: input.error };
     const inviteeIds = [...new Set(form.getAll("inviteeId"))];
     if (inviteeIds.length > 50 || inviteeIds.some(value => !isUuid(value))) return { error: "招待するユーザーを確認してください。最大50人まで選べます。" };
     if (inviteeIds.length && data.claims.is_anonymous === true) return { error: "招待にはアカウントでのログインが必要です。" };
     const movie = await getMovieForBoard(tmdbId);
-    const { data: id, error: dbError } = await supabase.rpc(inviteeIds.length ? "cinema_create_board_with_invites" : "cinema_create_board", {
+    const { data: id, error: dbError } = await supabase.rpc("cinema_create_board_options", {
       p_request_id: requestId, p_title: input.draft.title, p_movie_tmdb_id: movie.tmdbId, p_movie_title: movie.title,
       p_movie_poster_url: movie.posterUrl, p_movie_release_date: movie.releaseDate,
       p_movie_genres: movie.genres ?? [], p_capacity: input.draft.capacity, p_starts_at: input.draft.startsAt,
       p_allow_guests: input.draft.allowGuests,
-      ...(inviteeIds.length ? { p_invitee_ids: inviteeIds } : {}),
+      p_invitee_ids: inviteeIds, p_has_spoilers: input.draft.hasSpoilers ?? false,
     });
     if (dbError) throw databaseError(dbError);
     if (!isUuid(id)) throw databaseError(null);

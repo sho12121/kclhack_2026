@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { SpoilerBadge } from "./spoiler-badge";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createBoard } from "@/app/boards/actions";
@@ -227,6 +228,7 @@ export function BoardCreateForm({ initialNow, inviteCandidates = [], invitationE
   const [capacity, setCapacity] = useState("4");
   const [unlimitedCapacity, setUnlimitedCapacity] = useState(false);
   const [allowGuests, setAllowGuests] = useState(true);
+  const [hasSpoilers, setHasSpoilers] = useState(false);
 
   // 開始日時（初期値: 7日後の23時59分）
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -320,7 +322,7 @@ export function BoardCreateForm({ initialNow, inviteCandidates = [], invitationE
       movie,
       capacity: unlimitedCapacity ? "unlimited" : capacity,
       startDateTime: fullStartDateTime,
-      allowGuests,
+      allowGuests, hasSpoilers,
     });
     setError(result.error);
     setPreview(result.draft);
@@ -461,6 +463,10 @@ export function BoardCreateForm({ initialNow, inviteCandidates = [], invitationE
 
       {/* 掲示板作成フォーム */}
       <form id={`${id}-form`} onSubmit={handleConfirm}>
+        <div className={styles.field}>
+          <button type="button" className={styles.spoilerToggle} aria-pressed={hasSpoilers} disabled={isCreating} onClick={() => { setHasSpoilers(value => !value); invalidatePreview(); }}>ネタバレ注意</button>
+          <small className={styles.fieldHelp}>{hasSpoilers ? "掲示板に「ネタバレ」と表示します。" : "映画の内容や結末に触れる場合はオンにしてください。"}</small>
+        </div>
         <fieldset className={styles.invitationPicker} disabled={isCreating}>
           <legend>フォロー中のユーザーを招待（任意）</legend>
           <p className={styles.fieldHelp}>相手に通知が届きます。参加は相手が選び、定員の枠は予約されません。</p>
@@ -759,6 +765,7 @@ export function BoardCreateForm({ initialNow, inviteCandidates = [], invitationE
           </div>
           <p role="status" className={styles.previewStatus}>内容を確認して「作成する」を押してください。</p>
           <dl className={styles.previewList}>
+            <div className={styles.previewItem}><dt>ネタバレ注意</dt><dd>{preview.hasSpoilers ? <SpoilerBadge show /> : "なし"}</dd></div>
             <div className={styles.previewItem}><dt>招待する人</dt><dd>{inviteeIds.length ? inviteCandidates.filter(person => inviteeIds.includes(person.id)).map(person => person.nickname).join("、") : "招待しない"}</dd></div>
             <div className={styles.previewItem}><dt>参加できる人</dt><dd>{preview.allowGuests ? "登録ユーザー・ゲスト" : "登録ユーザーのみ"}</dd></div>
             <div className={styles.previewItem}>
@@ -810,6 +817,7 @@ export function BoardCreateForm({ initialNow, inviteCandidates = [], invitationE
                 form.set("capacity", preview.capacity === null ? "unlimited" : String(preview.capacity));
                 form.set("startDateTime", fullStartDateTime);
                 form.set("allowGuests", String(preview.allowGuests));
+                form.set("hasSpoilers", String(preview.hasSpoilers ?? false));
                 for (const inviteeId of inviteeIds) form.append("inviteeId", inviteeId);
                 startCreating(async () => {
                   try {

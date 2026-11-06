@@ -7,6 +7,7 @@ import { UserProfile } from "@/types/profile";
 import { SiteSidebar } from "@/components/layout/site-sidebar";
 import { updateProfile } from "@/app/account/actions";
 import type { BoardSummary } from "@/types/board";
+import { SpoilerBadge } from "@/components/boards/spoiler-badge";
 import { FavoriteButton } from "@/components/boards/favorite-button";
 import { defaultProfileName } from "@/lib/profile";
 import { formatBoardDate } from "@/lib/board-draft";
@@ -151,7 +152,7 @@ export function AccountView({ initialProfile, favoriteBoards = [], favoritesErro
               {!boardsError && !createdBoards.length && <p>まだ作成した掲示板はありません。</p>}
               {createdBoards.map(board => <article key={board.id} className={styles.postCard}>
                 <div className={styles.postMain}>
-                  <h2 className={styles.postTitle}><Link href={`/boards/${board.id}`}>{board.title}</Link></h2>
+                  <SpoilerBadge show={board.hasSpoilers} /><h2 className={styles.postTitle}><Link href={`/boards/${board.id}`}>{board.title}</Link></h2>
                   <p>{board.movie.title}</p>
                   <p className={styles.postContent}>参加者 {board.participantCount}人 ／ 定員 {board.capacity === null ? "制限なし" : `${board.capacity}人`}</p>
                   <div className={styles.postFooter}><span>開始日時：{formatBoardDate(board.startsAt)}</span></div>
@@ -164,7 +165,7 @@ export function AccountView({ initialProfile, favoriteBoards = [], favoritesErro
               {!favoritesError && !visibleFavorites.length && <p>お気に入りの掲示板はまだありません。掲示板の「お気に入りに登録」から追加できます。</p>}
               {visibleFavorites.map(board => <article key={board.id} className={styles.postCard}>
                 <div className={styles.postMain}>
-                  <h2 className={styles.postTitle}><Link href={`/boards/${board.id}`}>{board.title}</Link></h2>
+                  <SpoilerBadge show={board.hasSpoilers} /><h2 className={styles.postTitle}><Link href={`/boards/${board.id}`}>{board.title}</Link></h2>
                   <p>{board.movie.title}</p>
                   <FavoriteButton boardId={board.id} initialFavorite onChange={favorite => { if (!favorite) setRemovedFavoriteIds(ids => [...ids, board.id]); }} />
                 </div>

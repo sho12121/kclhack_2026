@@ -16,6 +16,7 @@ export function parseBoardList(value: unknown): BoardSummary[] {
       || !Number.isSafeInteger(board.participantCount) || Number(board.participantCount) < 0
       || typeof board.startsAt !== "string" || !Number.isFinite(Date.parse(board.startsAt))
       || typeof board.createdAt !== "string" || !Number.isFinite(Date.parse(board.createdAt))
+      || (board.hasSpoilers !== undefined && typeof board.hasSpoilers !== "boolean")
       || typeof board.allowGuests !== "boolean" || typeof board.isMember !== "boolean" || typeof board.isFavorite !== "boolean") {
       throw new Error("掲示板一覧の応答を確認できませんでした。");
     }
@@ -23,7 +24,7 @@ export function parseBoardList(value: unknown): BoardSummary[] {
       id: board.id, title: board.title,
       movie: { tmdbId: Number(board.movie.tmdbId), title: board.movie.title, posterUrl: board.movie.posterUrl, releaseDate: board.movie.releaseDate, genres: board.movie.genres as string[] | undefined },
       capacity: board.capacity === null ? null : Number(board.capacity), participantCount: Number(board.participantCount),
-      startsAt: board.startsAt, createdAt: board.createdAt, allowGuests: board.allowGuests, isMember: board.isMember, isFavorite: board.isFavorite,
+      startsAt: board.startsAt, createdAt: board.createdAt, allowGuests: board.allowGuests, hasSpoilers: board.hasSpoilers === true, isMember: board.isMember, isFavorite: board.isFavorite,
     };
   });
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { SpoilerBadge } from "./spoiler-badge";
+
 import Link from "next/link";
 import { FavoriteButton } from "./favorite-button";
 import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent } from "react";
@@ -169,6 +171,7 @@ export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, ini
     <Link href="/">← 掲示板一覧へ</Link>
     <header className={styles.heading}>
       <span className={styles.status}>{isStarted ? "開催中" : "開催予定"}</span>
+      <SpoilerBadge show={board.hasSpoilers} />
       <h1>{board.title}</h1>
         {!viewerIsGuest && <FavoriteButton key={`${board.id}-${board.isFavorite}`} boardId={board.id} initialFavorite={board.isFavorite} />}
       <p className={styles.movie}>{board.movie.title}</p>

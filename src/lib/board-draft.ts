@@ -11,6 +11,7 @@ export type BoardDraftInput = {
   capacity: string;
   startDateTime: string;
   allowGuests?: boolean;
+  hasSpoilers?: boolean;
 };
 
 export function validateBoardStartDateTime(value: string, now = Date.now()): string | null {
@@ -31,6 +32,7 @@ export function validateBoardDraft(
   now = Date.now(),
 ): { draft: BoardDraft; error: null } | { draft: null; error: string } {
   const title = input.title.trim();
+  if (input.hasSpoilers !== undefined && typeof input.hasSpoilers !== "boolean") return { draft: null, error: "ネタバレ注意の設定を確認してください。" };
   if (input.allowGuests !== undefined && typeof input.allowGuests !== "boolean") return { draft: null, error: "ゲストの参加設定を確認してください。" };
   if (!title || title.length > MAX_BOARD_TITLE_LENGTH) {
     return { draft: null, error: `掲示板のタイトルを1〜${MAX_BOARD_TITLE_LENGTH}文字で入力してください。` };
@@ -50,7 +52,7 @@ export function validateBoardDraft(
 
   return {
     error: null,
-    draft: { title, movie: input.movie, capacity, startsAt: new Date(timestamp).toISOString(), allowGuests: input.allowGuests ?? true },
+    draft: { title, movie: input.movie, capacity, startsAt: new Date(timestamp).toISOString(), allowGuests: input.allowGuests ?? true, hasSpoilers: input.hasSpoilers ?? false },
   };
 }
 

@@ -73,3 +73,8 @@ test("掲示板: ゲスト受け入れ設定を確認内容に保持する", () 
   assert.equal(validateBoardDraft({...input,allowGuests:true},now).draft?.allowGuests,true);
   assert.equal(validateBoardDraft(input,now).draft?.allowGuests,true);
 });
+
+test("ネタバレ注意: 初期値はオフ、指定時は作成内容に保持する", () => {
+  assert.equal(validateBoardDraft(input,now).draft?.hasSpoilers,false);
+  assert.equal(validateBoardDraft({...input,hasSpoilers:true},now).draft?.hasSpoilers,true);
+});

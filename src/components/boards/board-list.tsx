@@ -1,5 +1,7 @@
 "use client";
 
+import { SpoilerBadge } from "./spoiler-badge";
+
 import { useEffect, useId, useState } from "react";
 import { parseBoardList } from "@/lib/board-list-data";
 import type { BoardSummary } from "@/types/board";
@@ -134,6 +136,7 @@ export function BoardList({ boards: initialBoards, isSample = false, initialNow 
                     <span className={`${styles.boardStatus} ${isStarted ? styles.boardLive : ""}`}>
                       {isStarted ? "開催中" : "開催予定"}
                     </span>
+                    <SpoilerBadge show={board.hasSpoilers} />
                     <h3>{board.title}</h3>
                     <p>{board.allowGuests ? "ゲスト参加OK" : "登録ユーザー限定"}</p>
                     <p className={styles.boardMovie}><FilmIcon />{board.movie.title}</p>

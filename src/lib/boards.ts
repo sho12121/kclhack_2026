@@ -24,7 +24,7 @@ export async function listBoards(id?: string): Promise<StoredBoard[]> {
     return ids;
   })();
   const [{ data, error }, favoriteIds] = await Promise.all([
-    readDatabase(() => supabase.rpc("cinema_list_boards", { p_board_id: id ?? null })),
+    readDatabase(() => supabase.rpc("cinema_list_boards_with_labels", { p_board_id: id ?? null })),
     favoritesPromise,
   ]);
   if (error) throw databaseError(error);
@@ -38,7 +38,7 @@ export async function listBoards(id?: string): Promise<StoredBoard[]> {
       releaseDate: typeof value.movie.releaseDate === "string" ? value.movie.releaseDate : null,
       genres: Array.isArray(value.movie.genres) ? value.movie.genres.filter((g): g is string => typeof g === "string") : [],
     };
-    return { isFavorite: favoriteIds.has(value.id), id: value.id, title: value.title, movie, capacity: value.capacity === null ? null : Number(value.capacity), startsAt: value.starts_at, createdAt: value.created_at, participantCount: Number(value.participant_count), allowGuests: value.allow_guests, ownerId: value.created_by, ownerName: value.creator_name, ownerIsGuest: value.creator_is_guest, isMember: value.is_member === true, isOwner: value.is_owner === true };
+    return { hasSpoilers: value.has_spoilers === true, isFavorite: favoriteIds.has(value.id), id: value.id, title: value.title, movie, capacity: value.capacity === null ? null : Number(value.capacity), startsAt: value.starts_at, createdAt: value.created_at, participantCount: Number(value.participant_count), allowGuests: value.allow_guests, ownerId: value.created_by, ownerName: value.creator_name, ownerIsGuest: value.creator_is_guest, isMember: value.is_member === true, isOwner: value.is_owner === true };
   });
 }
 

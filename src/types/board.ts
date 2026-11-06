@@ -7,6 +7,7 @@ export type BoardDraft = {
   capacity: number | null; // nullは定員の制限なし。
   startsAt: string;
   allowGuests: boolean;
+  hasSpoilers?: boolean;
 };
 
 /** 一覧で公開する募集情報。会話の本文は含めない。 */
