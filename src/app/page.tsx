@@ -3,10 +3,11 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { BoardCreateForm } from "@/components/boards/board-create-form";
 import { BoardList } from "@/components/boards/board-list";
-import { sampleBoards } from "@/lib/sample-boards";
 import { listBoards } from "@/lib/boards";
 import { DatabaseError } from "@/lib/database-error";
 import type { BoardSummary } from "@/types/board";
+import { findProfiles } from "@/lib/social";
+import type { PublicProfile } from "@/types/social";
 import { getAuth } from "@/lib/supabase/server";
 import { SiteSidebar } from "@/components/layout/site-sidebar";
 import { ChatIcon, FilmIcon } from "@/components/ui/icons";
@@ -24,9 +25,12 @@ async function getBoardFormInitialTime() {
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
-  const { create, demo } = await searchParams;
-  const showDemo = demo === "1" && create !== "1";
+  const { create } = await searchParams;
   const showCreateForm = create === "1";
+
+  let inviteCandidates: PublicProfile[] = [];
+  let invitationError = "";
+  let canInvite = false;
 
   // 一覧の閲覧はログイン不要。作成画面を開くときだけ本人を確認する。
   if (showCreateForm) {
@@ -35,12 +39,17 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       const params = new URLSearchParams({ next: "/?create=1" });
       redirect(`/login?${params}`);
     }
+    canInvite = data.claims.is_anonymous !== true;
+    if (canInvite) {
+      try { inviteCandidates = await findProfiles("", data.claims.sub, "following"); }
+      catch (error) { invitationError = error instanceof Error ? error.message : "招待候補を取得できませんでした。"; }
+    }
   }
 
   const initialNow = await getBoardFormInitialTime();
   let boards: BoardSummary[] = [];
   let loadError = "";
-  try { boards = showDemo ? sampleBoards : await listBoards(); }
+  try { boards = await listBoards(); }
   catch (error) { loadError = error instanceof DatabaseError ? error.message : "掲示板一覧を取得できませんでした。時間をおいて再読み込みしてください。"; }
 
   return (
@@ -53,10 +62,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           <p className={styles.introDescription}>同じ映画を観て、感想を語ろう。</p>
           {!showCreateForm && <Link className={styles.primary} href="/?create=1"><ChatIcon />掲示板を作成する</Link>}
         </section>
-        {showCreateForm && <BoardCreateForm initialNow={initialNow} />}
+        {showCreateForm && <BoardCreateForm initialNow={initialNow} inviteCandidates={inviteCandidates} invitationError={invitationError} canInvite={canInvite} />}
         {loadError ? <div className={styles.panel} role="alert"><p>{loadError}</p><Link href="/">再読み込み</Link></div>
-          : <BoardList boards={boards} isSample={showDemo} initialNow={initialNow} />}
-        <p><Link href={showDemo ? "/" : "/?demo=1"}>{showDemo ? "実際の掲示板一覧へ" : "サンプル画面を見る"}</Link></p>
+          : <BoardList boards={boards} initialNow={initialNow} />}
       </div>
       <aside className={styles.guideSidebar} aria-label="ハナシネマの使い方">
         <section className={styles.guideCard}>

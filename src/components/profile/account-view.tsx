@@ -3,23 +3,24 @@
 import React, { useState, useTransition } from "react";
 import Link from "next/link";
 import styles from "./account.module.css";
-import { UserProfile, UserPost, FavoriteMovie, ActivityItem } from "@/types/profile";
+import { UserProfile, ActivityItem } from "@/types/profile";
 import { SiteSidebar } from "@/components/layout/site-sidebar";
 import { updateProfile } from "@/app/account/actions";
-import { DeleteCommentButton } from "@/components/social/delete-comment-button";
+import type { BoardSummary } from "@/types/board";
+import { FavoriteButton } from "@/components/boards/favorite-button";
+import { defaultProfileName } from "@/lib/profile";
+import { formatBoardDate } from "@/lib/board-draft";
 import {
   ChatIcon,
   UserIcon,
   EditPencilIcon,
-  ChevronRightIcon,
   CalendarIcon,
   MapPinIcon,
   TagIcon,
   GenderIcon,
 } from "./icons";
 import {
-  CoverArtwork,
-  TakashiAvatar,
+  DefaultAvatar,
   KimiNoNaWaPoster,
   InceptionPoster,
   SpiritedAwayPoster,
@@ -27,24 +28,25 @@ import {
   BatmanPoster,
 } from "./artworks";
 
-const favoriteMovies: FavoriteMovie[] = [];
 const recentActivities: ActivityItem[] = [];
 
 export type AccountViewProps = {
   initialProfile: UserProfile;
-  posts?: UserPost[];
-  postsError?: string;
+  favoriteBoards?: BoardSummary[];
+  favoritesError?: string;
+  createdBoards?: BoardSummary[];
+  boardsError?: string;
   followError?: string;
 };
 
-export function AccountView({ initialProfile, posts = [], postsError, followError }: AccountViewProps) {
+export function AccountView({ initialProfile, favoriteBoards = [], favoritesError, createdBoards = [], boardsError, followError }: AccountViewProps) {
+  const [removedFavoriteIds, setRemovedFavoriteIds] = useState<string[]>([]);
+  const visibleFavorites = favoriteBoards.filter(board => !removedFavoriteIds.includes(board.id));
   const [profile, setProfile] = useState<UserProfile>(initialProfile);
   const [activeTab, setActiveTab] = useState<"posts" | "favorites">("posts");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [profileError, setProfileError] = useState<string | null>(null);
-  const [removedPostIds, setRemovedPostIds] = useState<string[]>([]);
-  const visiblePosts = posts.filter(post => !removedPostIds.includes(post.id));
 
   // 編集フォーム状態
   const [editForm, setEditForm] = useState({
@@ -80,7 +82,7 @@ export function AccountView({ initialProfile, posts = [], postsError, followErro
       try {
         const res = await updateProfile(formData);
         if (res.success && res.profile) {
-          setProfile({...res.profile,followCount:profile.followCount,followerCount:profile.followerCount});
+          setProfile({...res.profile,userNumber:profile.userNumber,followCount:profile.followCount,followerCount:profile.followerCount});
           setIsEditModalOpen(false);
         } else setProfileError(res.error || "プロフィールを保存できませんでした。");
       } catch { setProfileError("通信に失敗しました。入力内容はそのままで、もう一度保存をお試しください。"); }
@@ -116,14 +118,12 @@ export function AccountView({ initialProfile, posts = [], postsError, followErro
           {/* プロフィールヒーローカード */}
           <div className={styles.profileHeroCard}>
             <div className={styles.coverPhotoWrapper}>
-              <CoverArtwork />
-              <div className={styles.coverPhotoOverlay} />
             </div>
 
             <div className={styles.profileHeroBody}>
               <div className={styles.avatarHeaderRow}>
                 <div className={styles.profileAvatar}>
-                  <TakashiAvatar />
+                  <DefaultAvatar />
                 </div>
                 <button
                   type="button"
@@ -136,15 +136,14 @@ export function AccountView({ initialProfile, posts = [], postsError, followErro
               </div>
 
               <div className={styles.profileDetails}>
-                <h1 className={styles.profileName}>{profile.nickname}</h1>
-                <p className={styles.profileBio}>{profile.bio}</p>
+                <h1 className={styles.profileName}>{profile.nickname || defaultProfileName(profile.userNumber)}</h1>
+                {profile.bio.trim() ? <p className={styles.profileBio}>{profile.bio}</p> : <button type="button" className={styles.profilePrompt} onClick={handleOpenEdit}>プロフィールを記入</button>}
 
                 <div className={styles.followMetrics}>
                   <Link href={`/users/${profile.id}?tab=following`}>フォロー <strong className={styles.followNumber}>{followError ? "—" : profile.followCount}</strong></Link>
                   <Link href={`/users/${profile.id}?tab=followers`}>フォロワー <strong className={styles.followNumber}>{followError ? "—" : profile.followerCount}</strong></Link>
                 </div>
                 {followError && <p role="alert">{followError}</p>}
-                <p>他の人に公開されるのは、ニックネーム・自己紹介・好きなジャンル・ひとことです。生年月日・性別・居住地は自分だけが閲覧できます。</p>
               </div>
             </div>
           </div>
@@ -158,7 +157,7 @@ export function AccountView({ initialProfile, posts = [], postsError, followErro
               className={`${styles.tabButton} ${activeTab === "posts" ? styles.tabButtonActive : ""}`}
               onClick={() => setActiveTab("posts")}
             >
-              投稿一覧
+              作成した掲示板
             </button>
             <button
               type="button"
@@ -174,36 +173,28 @@ export function AccountView({ initialProfile, posts = [], postsError, followErro
           {/* タブコンテンツ */}
           {activeTab === "posts" ? (
             <div className={styles.postList}>
-              {postsError && <p role="alert">{postsError}</p>}
-              {!postsError && visiblePosts.length === 0 && <p>まだ会話への投稿はありません。</p>}
-              {visiblePosts.length > 0 && <p>最近の投稿を最大50件表示しています。</p>}
-              {visiblePosts.map((post) => (
-                <article key={post.id} className={styles.postCard}>
-                  <div className={styles.postPoster}>
-                    {renderPoster(post.posterBg, styles.postPoster)}
-                  </div>
-                  <div className={styles.postMain}>
-                    <div className={styles.postHeaderRow}>
-                      <h2 className={styles.postTitle}><Link href={`/boards/${post.boardId}`}>{post.title}</Link></h2>
-                      <span className={styles.postBadge}>{post.tag}</span>
-                    </div>
-                    <p className={styles.postContent}>{post.content}</p>
-                    <div className={styles.postFooter}>
-                      <div className={styles.postMetaLeft}>
-                        <span>{post.date}</span>
-                      </div>
-                      <ChevronRightIcon className={styles.postArrow} />
-                    </div>
-                    <DeleteCommentButton id={post.id} onDeleted={() => setRemovedPostIds(current=>[...current,post.id])}/>
-                  </div>
-                </article>
-              ))}
+              {boardsError && <p role="alert">{boardsError}</p>}
+              {!boardsError && !createdBoards.length && <p>まだ作成した掲示板はありません。</p>}
+              {createdBoards.map(board => <article key={board.id} className={styles.postCard}>
+                <div className={styles.postMain}>
+                  <h2 className={styles.postTitle}><Link href={`/boards/${board.id}`}>{board.title}</Link></h2>
+                  <p>{board.movie.title}</p>
+                  <p className={styles.postContent}>参加者 {board.participantCount}人 ／ 定員 {board.capacity === null ? "制限なし" : `${board.capacity}人`}</p>
+                  <div className={styles.postFooter}><span>開始日時：{formatBoardDate(board.startsAt)}</span></div>
+                </div>
+              </article>)}
             </div>
           ) : (
             <div className={styles.postList}>
-              <div className={styles.postCard} style={{ justifyContent: "center", padding: "40px 20px", color: "#64748b" }}>
-                <p>保存されたお気に入りの投稿はまだありません。</p>
-              </div>
+              {favoritesError && <p role="alert">{favoritesError}</p>}
+              {!favoritesError && !visibleFavorites.length && <p>お気に入りの掲示板はまだありません。掲示板の「お気に入りに登録」から追加できます。</p>}
+              {visibleFavorites.map(board => <article key={board.id} className={styles.postCard}>
+                <div className={styles.postMain}>
+                  <h2 className={styles.postTitle}><Link href={`/boards/${board.id}`}>{board.title}</Link></h2>
+                  <p>{board.movie.title}</p>
+                  <FavoriteButton boardId={board.id} initialFavorite onChange={favorite => { if (!favorite) setRemovedFavoriteIds(ids => [...ids, board.id]); }} />
+                </div>
+              </article>)}
             </div>
           )}
         </div>
@@ -217,7 +208,7 @@ export function AccountView({ initialProfile, posts = [], postsError, followErro
               <div className={styles.summaryItem}>
                 <UserIcon className={styles.summaryIcon} />
                 <span className={styles.summaryLabel}>ニックネーム</span>
-                <span className={styles.summaryValue}>{profile.nickname}</span>
+                <span className={styles.summaryValue}>{profile.nickname || defaultProfileName(profile.userNumber)}</span>
               </div>
               <div className={styles.summaryItem}>
                 <GenderIcon className={styles.summaryIcon} />
@@ -247,37 +238,16 @@ export function AccountView({ initialProfile, posts = [], postsError, followErro
             </div>
           </div>
 
-          {/* 好きな映画 */}
-          <div className={styles.sidebarCard}>
-            <div className={styles.sidebarCardHeader}>
-              <h2 className={styles.sidebarCardTitle} style={{ margin: 0 }}>好きな映画</h2>
-              <Link href="/" className={styles.moreLink}>
-                もっと見る <ChevronRightIcon />
-              </Link>
-            </div>
-            <p>お気に入り機能は準備中です。</p>
-            <div className={styles.movieGrid}>
-              {favoriteMovies.map((movie) => (
-                <div key={movie.id} className={styles.movieGridItem}>
-                  <div className={styles.moviePoster}>
-                    {renderPoster(movie.posterBg, styles.moviePoster)}
-                  </div>
-                  <p className={styles.movieGridTitle}>{movie.title}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* 最近のアクティビティ */}
           <div className={styles.sidebarCard}>
             <h2 className={styles.sidebarCardTitle}>最近のアクティビティ</h2>
-            <p>会話への投稿は「投稿一覧」で確認できます。</p>
+            <p>作成した掲示板は「作成した掲示板」タブで確認できます。</p>
             <div className={styles.activityList}>
               {recentActivities.map((act) => (
                 <div key={act.id} className={styles.activityItem}>
                   <div className={styles.activityAvatar}>
                     {act.iconBg === "avatar" ? (
-                      <TakashiAvatar />
+                      <DefaultAvatar />
                     ) : (
                       renderPoster(act.iconBg, styles.activityAvatar)
                     )}

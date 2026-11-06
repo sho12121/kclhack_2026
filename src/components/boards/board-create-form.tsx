@@ -8,6 +8,7 @@ import { useEffect, useId, useRef, useState, useTransition, type FormEvent, type
 import { MovieSearch } from "@/components/movies/movie-search";
 import { formatBoardDate, shiftBoardDate, MAX_BOARD_CAPACITY, MAX_BOARD_TITLE_LENGTH, MIN_BOARD_CAPACITY, validateBoardDraft, validateBoardStartDateTime } from "@/lib/board-draft";
 import type { BoardDraft } from "@/types/board";
+import type { PublicProfile } from "@/types/social";
 import type { Movie } from "@/types/movie";
 import { isGeneralAudience } from "@/lib/movie-certification";
 import styles from "./board-create-form.module.css";
@@ -202,7 +203,10 @@ const MINUTE_OPTIONS = [
   }).filter((item): item is { value: string; label: string } => item !== null),
 ].sort((a, b) => Number(a.value) - Number(b.value));
 
-export function BoardCreateForm({ initialNow }: { initialNow: number }) {
+export function BoardCreateForm({ initialNow, inviteCandidates = [], invitationError = "", canInvite = false }: {
+  initialNow: number; inviteCandidates?: PublicProfile[]; invitationError?: string; canInvite?: boolean;
+}) {
+  const [inviteeIds, setInviteeIds] = useState<string[]>([]);
   const [now, setNow] = useState(initialNow);
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 60_000);
@@ -452,6 +456,19 @@ export function BoardCreateForm({ initialNow }: { initialNow: number }) {
 
       {/* 掲示板作成フォーム */}
       <form id={`${id}-form`} onSubmit={handleConfirm}>
+        <fieldset className={styles.invitationPicker} disabled={isCreating}>
+          <legend>フォロー中のユーザーを招待（任意）</legend>
+          <p className={styles.fieldHelp}>相手に通知が届きます。参加は相手が選び、定員の枠は予約されません。</p>
+          {!canInvite ? <p className={styles.fieldHelp}>招待には通常アカウントでのログインが必要です。</p>
+            : invitationError ? <p role="alert">{invitationError}</p>
+            : !inviteCandidates.length ? <p className={styles.fieldHelp}>フォロー中のユーザーはいません。掲示板で出会った人のプロフィールからフォローできます。</p>
+            : <><div className={styles.invitationOptions}>{inviteCandidates.map(person => <label key={person.id} className={styles.unlimitedOption}>
+              <input type="checkbox" checked={inviteeIds.includes(person.id)} onChange={event => {
+                setInviteeIds(ids => event.target.checked ? [...ids, person.id] : ids.filter(value => value !== person.id));
+                invalidatePreview();
+              }} />{person.nickname}
+            </label>)}</div><small className={styles.fieldHelp}>候補は最大50人表示します。選択中：{inviteeIds.length}人</small></>}
+        </fieldset>
         <div className={styles.field}>
           <label className={styles.unlimitedOption}>
             <input type="checkbox" checked={allowGuests} onChange={event => {
@@ -737,6 +754,7 @@ export function BoardCreateForm({ initialNow }: { initialNow: number }) {
           </div>
           <p role="status" className={styles.previewStatus}>内容を確認して「作成する」を押してください。</p>
           <dl className={styles.previewList}>
+            <div className={styles.previewItem}><dt>招待する人</dt><dd>{inviteeIds.length ? inviteCandidates.filter(person => inviteeIds.includes(person.id)).map(person => person.nickname).join("、") : "招待しない"}</dd></div>
             <div className={styles.previewItem}><dt>参加できる人</dt><dd>{preview.allowGuests ? "登録ユーザー・ゲスト" : "登録ユーザーのみ"}</dd></div>
             <div className={styles.previewItem}>
               <dt>タイトル</dt>
@@ -787,6 +805,7 @@ export function BoardCreateForm({ initialNow }: { initialNow: number }) {
                 form.set("capacity", preview.capacity === null ? "unlimited" : String(preview.capacity));
                 form.set("startDateTime", fullStartDateTime);
                 form.set("allowGuests", String(preview.allowGuests));
+                for (const inviteeId of inviteeIds) form.append("inviteeId", inviteeId);
                 startCreating(async () => {
                   try {
                     const result = await createBoard(form);

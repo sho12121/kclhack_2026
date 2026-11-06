@@ -34,12 +34,16 @@ export async function createBoard(form: FormData): Promise<{ id?: string; error?
     if (typeof title !== "string" || typeof capacity !== "string" || typeof startDateTime !== "string" || !isUuid(requestId) || !Number.isSafeInteger(tmdbId) || tmdbId <= 0) return { error: "入力内容を確認してください。" };
     const input = validateBoardDraft({ title, capacity, startDateTime, allowGuests: guestSetting === "true", movie: { tmdbId, title: "選択映画", releaseDate: null, posterUrl: null } });
     if (!input.draft) return { error: input.error };
+    const inviteeIds = [...new Set(form.getAll("inviteeId"))];
+    if (inviteeIds.length > 50 || inviteeIds.some(value => !isUuid(value))) return { error: "招待するユーザーを確認してください。最大50人まで選べます。" };
+    if (inviteeIds.length && data.claims.is_anonymous === true) return { error: "招待にはアカウントでのログインが必要です。" };
     const movie = await getMovieForBoard(tmdbId);
-    const { data: id, error: dbError } = await supabase.rpc("cinema_create_board", {
+    const { data: id, error: dbError } = await supabase.rpc(inviteeIds.length ? "cinema_create_board_with_invites" : "cinema_create_board", {
       p_request_id: requestId, p_title: input.draft.title, p_movie_tmdb_id: movie.tmdbId, p_movie_title: movie.title,
       p_movie_poster_url: movie.posterUrl, p_movie_release_date: movie.releaseDate,
       p_movie_genres: movie.genres ?? [], p_capacity: input.draft.capacity, p_starts_at: input.draft.startsAt,
       p_allow_guests: input.draft.allowGuests,
+      ...(inviteeIds.length ? { p_invitee_ids: inviteeIds } : {}),
     });
     if (dbError) throw databaseError(dbError);
     if (!isUuid(id)) throw databaseError(null);
@@ -60,17 +64,18 @@ export async function joinBoard(id: string): Promise<{ error?: string }> {
   } catch (error) { return { error: message(error) }; }
 }
 
-export async function postMessage(boardId: string, content: string): Promise<{ error?: string; message?: BoardMessage }> {
+export async function postMessage(boardId: string, content: string, replyToId: string | null = null): Promise<{ error?: string; message?: BoardMessage }> {
+  if (replyToId !== null && !isDatabaseId(replyToId)) return { error: "返信先を確認してください。" };
   if (!isUuid(boardId) || typeof content !== "string" || !content.trim() || content.trim().length > 2000) return { error: "メッセージを1〜2000文字で入力してください。" };
   try {
     const { supabase, userId, isGuest } = await authenticatedClient();
-    const { data: id, error } = await supabase.rpc("cinema_post_message", { p_board_id: boardId, p_content: content.trim() });
+    const { data: id, error } = await supabase.rpc("cinema_post_message", { p_board_id: boardId, p_content: content.trim(), p_reply_to_id: replyToId });
     if (error) throw databaseError(error);
     // 会話はローカルに追加し、プロフィールの履歴はページを開いた時にDBから読む。
     // ここでrevalidatePathすると、投稿のたびに現在の掲示板全体も再取得されてしまう。
     // DBで保存を確認してから自分の画面に反映する。次回取得で正式な名前・投稿日時に置き換わる。
     return typeof id === "string" && /^\d+$/.test(id) ? {
-      message: { id, boardId, authorId: userId, authorName: "あなた", content: content.trim(), createdAt: new Date().toISOString(), deletedAt: null, authorIsGuest: isGuest },
+      message: { id, boardId, authorId: userId, authorName: "あなた", content: content.trim(), createdAt: new Date().toISOString(), deletedAt: null, authorIsGuest: isGuest, replyToId },
     } : {};
   } catch (error) { return { error: message(error) }; }
 }
@@ -94,4 +99,18 @@ export async function deleteBoard(id: string): Promise<{ error?: string }> {
   } catch (error) { return { error: message(error) }; }
   revalidatePath("/");
   redirect("/");
+}
+
+export async function setBoardFavorite(boardId: string, favorite: boolean): Promise<{ error?: string }> {
+  if (!isUuid(boardId) || typeof favorite !== "boolean") return { error: "掲示板を確認してください。" };
+  try {
+    const { supabase, isGuest } = await authenticatedClient();
+    if (isGuest) return { error: "お気に入りにはアカウントでのログインが必要です。" };
+    const { error } = await supabase.rpc("cinema_set_board_favorite", { p_board_id: boardId, p_favorite: favorite });
+    if (error) throw databaseError(error);
+    revalidatePath("/account");
+    revalidatePath("/");
+    revalidatePath(`/boards/${boardId}`);
+    return {};
+  } catch (error) { return { error: message(error) }; }
 }

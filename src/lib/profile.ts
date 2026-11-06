@@ -31,11 +31,21 @@ export function profileFromRow(id: string, row: Record<string, unknown> | null, 
     if (typeof metadata[alternate] === "string") return metadata[alternate] as string;
     return typeof row?.[key] === "string" ? row[key] as string : "";
   };
+  const nickname = text("nickname") || text("display_name", "displayName") || (typeof metadata.display_name === "string" ? metadata.display_name : "");
+  const bio = text("bio");
+  // プロトタイプの紹介文だけを初期状態に戻す。本人の紹介文は保持する。
+  const compactBio = bio.replace(/\s/g, "");
+  const isSampleBio = compactBio.startsWith("映画で人生をちょっと豊かに。") && compactBio.includes("邦画も洋画も好きです。") && compactBio.includes("青春映画") && compactBio.endsWith("よろしくお願いします！");
   return {
-    id, nickname: text("nickname") || text("display_name", "displayName") || (typeof metadata.display_name === "string" ? metadata.display_name : "ユーザー"),
-    bio: text("bio"), gender: text("gender"), birthDate: text("birth_date", "birthDate"),
+    id, nickname: nickname === "たかし" ? "" : nickname,
+    bio: isSampleBio ? "" : bio, gender: text("gender"), birthDate: text("birth_date", "birthDate"),
     location: text("location"), favoriteGenres: text("favorite_genres", "favoriteGenres"), motto: text("motto"),
     avatarUrl: text("avatar_url", "avatarUrl") || undefined, coverUrl: text("cover_url", "coverUrl") || undefined,
     followCount: 0, followerCount: 0,
   };
+}
+
+/** DBが一意に発行した連番を表示する。SQL反映前は長い代替番号を作らない。 */
+export function defaultProfileName(number?: string): string {
+  return number && /^[1-9]\d*$/.test(number) ? `ユーザー#${number}` : "ユーザー";
 }

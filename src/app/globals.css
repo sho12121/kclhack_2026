@@ -51,3 +51,6 @@ h1 { font-size: 30px; line-height: 1.5; margin: 0 0 20px; }
 
 .guest-note { font-size: 13px; color: #475569; line-height: 1.8; }
 .auth-card a { color: #1d4ed8; }
+.guest-account-button { display: flex; justify-content: center; align-items: center; min-height: 44px; width: 100%; padding: 12px; border: 1px solid #2563eb; border-radius: 8px; background: #eff6ff; font-size: 14px; font-weight: 600; text-decoration: none; }
+.guest-account-button:hover { background: #dbeafe; }
+.guest-account-button:focus-visible { outline: 3px solid #1d4ed8; outline-offset: 3px; }

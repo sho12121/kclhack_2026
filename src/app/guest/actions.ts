@@ -7,8 +7,9 @@ import { safeAuthRedirect } from "@/lib/auth-redirect";
 
 /** ゲスト発行はPOSTだけ。QR入口ではブラウザ側がこのフォームを自動送信する。 */
 export async function startGuest(form: FormData) {
-  const next = safeAuthRedirect(form.get("next"), "/?create=1");
   const entry = form.get("entry") === "qr" ? "/guest/qr" : "/guest";
+  const requestedNext = safeAuthRedirect(form.get("next"), "/");
+  const next = entry === "/guest" && requestedNext === "/?create=1" ? "/" : requestedNext;
   const errorPath = (error: string) => `${entry}?${new URLSearchParams({ error, next })}`;
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
     redirect(errorPath("configuration"));

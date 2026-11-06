@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { FavoriteButton } from "./favorite-button";
 import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import { joinBoard, postMessage, deleteComment, deleteBoard } from "@/app/boards/actions";
 import { formatBoardDate } from "@/lib/board-draft";
@@ -18,6 +19,8 @@ export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, ini
   const [now, setNow] = useState(initialNow);
   const [messages, setMessages] = useState(initialMessages);
   const [content, setContent] = useState("");
+  const [replyTarget, setReplyTarget] = useState<BoardMessage | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pollError, setPollError] = useState<string | null>(null);
   const [hasOlder, setHasOlder] = useState(initialMessages.length === 50);
@@ -104,12 +107,13 @@ export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, ini
     setError(null);
     startTransition(async () => {
       try {
-        const result = await postMessage(board.id, content);
+        const result = await postMessage(board.id, content, replyTarget?.id ?? null);
         if (result.error) { setError(result.error); return; }
         setContent("");
+        setReplyTarget(null);
         stayAtBottom.current = true;
         const savedMessage = result.message;
-        if (savedMessage) setMessages(current => mergeMessages(current, [savedMessage]));
+        if (savedMessage) setMessages(current => mergeMessages(current, [{...savedMessage, replyToAuthorName: replyTarget?.authorName ?? null}]));
         // 投稿成功後の追加取得を、入力欄を使えるように戻す条件にしない。
         void refreshMessages();
       } catch { setError("投稿できませんでした。通信環境を確認して再度お試しください。"); }
@@ -121,6 +125,7 @@ export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, ini
     <header className={styles.heading}>
       <span className={styles.status}>{isStarted ? "開催中" : "開催予定"}</span>
       <h1>{board.title}</h1>
+        {!viewerIsGuest && <FavoriteButton key={`${board.id}-${board.isFavorite}`} boardId={board.id} initialFavorite={board.isFavorite} />}
       <p className={styles.movie}>{board.movie.title}</p>
       <p>{board.allowGuests ? "ゲスト参加OK" : "登録ユーザー限定"} · 作成者：{board.ownerIsGuest ? board.ownerName : <Link href={`/users/${board.ownerId}`}>{board.ownerName}</Link>}</p>
       <dl className={styles.info}>
@@ -157,17 +162,25 @@ export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, ini
         {messages.length === 0 && <p className={styles.empty}>まだ会話はありません。{isStarted ? "最初の感想を投稿してみましょう。" : "開始日時になったら会話を始めましょう。"}</p>}
         {messages.map(message => <article key={message.id} className={`${styles.message} ${message.authorId === viewerId ? styles.own : ""}`}>
           <div className={styles.messageMeta}><strong>{message.authorIsGuest === false ? <Link href={`/users/${message.authorId}`}>{message.authorName}</Link> : message.authorName}</strong><time dateTime={message.createdAt}>{formatBoardDate(message.createdAt)}</time></div>
+          {message.replyToId && <p className={styles.replyReference}>↳ {message.replyToAuthorName || "ユーザー"}さんのコメント #{message.replyToId} への返信</p>}
           <p>{message.content}</p>
+          {!message.deletedAt && isStarted && <button type="button" className={styles.replyButton} disabled={pending} onClick={() => {
+            setReplyTarget(message); inputRef.current?.focus(); inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+          }} aria-label={`${message.authorName}さんのコメントに返信`}>返信する</button>}
           {(message.authorId === viewerId || board.isOwner) && !message.deletedAt && <button type="button" className={styles.deleteComment} disabled={pending} onClick={()=>removeComment(message.id, message.authorId !== viewerId)}>{message.authorId === viewerId ? "自分のコメントを削除" : "管理者としてコメントを削除"}</button>}
         </article>)}
       </div>
       {pollError && <p role="alert" className={styles.error}>{pollError} <button type="button" className={styles.secondary} onClick={() => void refreshMessages()}>再読み込み</button></p>}
       {!isStarted && <p role="status">開始日時になると投稿できます。参加申し込みは完了しています。</p>}
       <form onSubmit={handlePost} className={styles.form}>
+        {replyTarget && <div className={styles.replyComposer}>
+          <div><strong>{replyTarget.authorName}さんに返信</strong><p>{replyTarget.content}</p></div>
+          <button type="button" className={styles.secondary} disabled={pending} onClick={() => setReplyTarget(null)}>返信をやめる</button>
+        </div>}
         <label htmlFor="message-content">感想・メッセージ</label>
-        <textarea id="message-content" value={content} maxLength={2000} rows={4} required disabled={pending || !isStarted}
+        <textarea ref={inputRef} id="message-content" value={content} maxLength={2000} rows={4} required disabled={pending || !isStarted}
           onChange={event => setContent(event.target.value)} placeholder="映画の感想を入力してください" />
-        <div className={styles.formFooter}><span>{content.length} / 2000文字</span><button type="submit" disabled={pending || !isStarted || !content.trim()}>{pending ? "投稿しています…" : "投稿する"}</button></div>
+        <div className={styles.formFooter}><span>{content.length} / 2000文字</span><button type="submit" disabled={pending || !isStarted || !content.trim()}>{pending ? "投稿しています…" : replyTarget ? "返信する" : "投稿する"}</button></div>
       </form>
       {error && <p role="alert" className={styles.error}>{error}</p>}
     </section>}

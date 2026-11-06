@@ -1154,3 +1154,8 @@
   padding-inline: 6px;
   white-space: nowrap;
 }
+
+.invitationPicker { min-width: 0; margin: 0 0 24px; padding: 20px; border: 1px solid #cbd5e1; border-radius: 12px; }
+.invitationPicker legend { font-weight: 700; font-size: 14px; padding: 0 6px; }
+.invitationOptions { display: grid; gap: 10px; max-height: 240px; overflow-y: auto; margin: 16px 0; }
+.invitationOptions label { min-height: 44px; overflow-wrap: anywhere; }

@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { CameraProjectorWatermark, ChatIcon, HomeIcon, SettingsIcon, UserIcon } from "@/components/ui/icons";
+import { BellIcon, CameraProjectorWatermark, ChatIcon, HomeIcon, SettingsIcon, UserIcon } from "@/components/ui/icons";
 import styles from "./site-layout.module.css";
 
 type SiteSidebarProps = {
-  active: "boards" | "account";
+  active: "boards" | "account" | "notifications";
   onEditProfile?: () => void;
 };
 
@@ -21,6 +21,10 @@ export function SiteSidebar({ active, onEditProfile }: SiteSidebarProps) {
         <Link href="/account" className={`${styles.navLink} ${active === "account" ? styles.active : ""}`}
           aria-current={active === "account" ? "page" : undefined}>
           <UserIcon /><span>マイページ</span>
+        </Link>
+        <Link href="/notifications" className={`${styles.navLink} ${active === "notifications" ? styles.active : ""}`}
+          aria-current={active === "notifications" ? "page" : undefined}>
+          <BellIcon /><span>通知</span>
         </Link>
         {onEditProfile && (
           <button type="button" className={styles.navLink} onClick={onEditProfile}>

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { formatBoardDate } from "@/lib/board-draft";
 import { CalendarIcon, ChatIcon, FilmIcon, UsersIcon } from "@/components/ui/icons";
 import styles from "./boards.module.css";
+import { FavoriteButton } from "./favorite-button";
 
 export function BoardList({ boards, isSample = false, initialNow }: {
   boards: BoardSummary[];
@@ -111,6 +112,7 @@ export function BoardList({ boards, isSample = false, initialNow }: {
                     </ul>}
                   </div>
                 </div>
+                {!isSample && <FavoriteButton key={`${board.id}-${board.isFavorite}`} boardId={board.id} initialFavorite={board.isFavorite} />}
                 <dl className={styles.boardInfo}>
                   <div>
                     <dt><UsersIcon />参加人数・定員</dt>

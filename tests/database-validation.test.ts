@@ -1,8 +1,15 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { safeAuthRedirect } from "../src/lib/auth-redirect.ts";
-import { validateProfile, profileFromRow } from "../src/lib/profile.ts";
+import { validateProfile, profileFromRow, defaultProfileName } from "../src/lib/profile.ts";
 import { databaseError } from "../src/lib/database-error.ts";
+
+test("初期表示名: DB連番を短く表示し、未発行時は長い番号を補わない", () => {
+  assert.equal(defaultProfileName("1"), "ユーザー#1");
+  assert.equal(defaultProfileName("25"), "ユーザー#25");
+  assert.equal(defaultProfileName(), "ユーザー");
+  assert.equal(defaultProfileName("invalid"), "ユーザー");
+});
 
 test("認証の戻り先: 正規の掲示板URLだけを許可し、外部URLやコードを拒否する", () => {
   const board = "/boards/11111111-1111-4111-8111-111111111111";
@@ -49,7 +56,26 @@ test("DB読み取り: 一時的な接続失敗だけを再試行し、権限エ�
 });
 
 
+test("新規プロフィール: 未設定項目に架空の情報を補わない", () => {
+  for (const row of [null, { nickname: "", bio: "", display_name: "" }]) {
+    const profile = profileFromRow("id", row);
+    for (const key of ["nickname", "bio", "gender", "birthDate", "location", "favoriteGenres", "motto"] as const) {
+      assert.equal(profile[key], "");
+    }
+    assert.equal(profile.avatarUrl, undefined);
+  }
+});
+
 test("旧プロフィール: 未移行の空の行ではAuth metadataの値を引き継ぐ", () => {
   const profile = profileFromRow("id", { nickname: "", bio: "", location: "" }, { nickname: "以前の名前", bio: "以前の紹介", location: "福岡" });
   assert.equal(profile.nickname, "以前の名前"); assert.equal(profile.bio, "以前の紹介"); assert.equal(profile.location, "福岡");
+});
+
+test("プロフィール: 試作時の名前・自己紹介を初期表示に戻し、本人の文章は保持する", () => {
+  const sample = profileFromRow("id", { nickname: "たかし", bio: "映画で人生をちょっと豊かに。\n邦画も洋画も好きです。特に人間ドラマや青春映画が好きです。\n最近は、映画をきっかけにいろんな人と話してみたいと思って\nよろしくお願いします！" });
+  assert.equal(sample.nickname, "");
+  assert.equal(sample.bio, "");
+  const saved = profileFromRow("id", { nickname: "映画仲間", bio: "好きな映画について話したいです。" });
+  assert.equal(saved.nickname, "映画仲間");
+  assert.equal(saved.bio, "好きな映画について話したいです。");
 });

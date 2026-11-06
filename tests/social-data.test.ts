@@ -20,3 +20,9 @@ test("ログイン後の戻り先: 通知・公開プロフィールに戻り、
  for(const path of ["/notifications","/users",`/users/${id}`])assert.equal(safeAuthRedirect(path),path);
  for(const path of ["/users/../../admin",`/users/${id}?next=https://evil.invalid`,"//evil.invalid","/notifications/../admin"])assert.equal(safeAuthRedirect(path),"/account");
 });
+
+test("招待通知: 掲示板への移動先を保持し、削除済みの掲示板も扱う", () => {
+ const item={id:"1",kind:"board_invitation",actorId:id,actorName:"映画好き",boardId:id,boardTitle:"映画の感想",createdAt:"2026-11-06T00:00:00Z",readAt:null};
+ assert.equal(parseInbox({unreadCount:1,items:[item]}).items[0].kind,"board_invitation");
+ assert.equal(parseInbox({unreadCount:1,items:[{...item,boardId:null}]}).items[0].boardId,null);
+});

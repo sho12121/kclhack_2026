@@ -16,3 +16,10 @@ test("DB ID: PostgreSQL bigintの範囲と整数形式を検証する", () => {
   for (const id of ["1", "9007199254740993", "9223372036854775807"]) assert.equal(isDatabaseId(id),true);
   for (const id of ["0", "-1", "1.2", "1e3", "9223372036854775808", 1, "1 OR 1=1", null]) assert.equal(isDatabaseId(id),false);
 });
+
+test("返信: 返信先IDを精度を落とさず受け取り、不正な参照を拒否する", () => {
+  const reply = {...message, replyToId: "9007199254740992", replyToAuthorName: "返信先"};
+  assert.equal(parseMessageSnapshot({messages:[reply],deletedIds:[]}).messages[0].replyToId,reply.replyToId);
+  assert.throws(()=>parseMessageSnapshot({messages:[{...reply,replyToId:123}],deletedIds:[]}));
+  assert.throws(()=>parseMessageSnapshot({messages:[{...reply,replyToAuthorName:{}}],deletedIds:[]}));
+});

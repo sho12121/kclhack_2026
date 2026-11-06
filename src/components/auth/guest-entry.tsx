@@ -30,12 +30,11 @@ export async function GuestEntry({ next, autoStart = false, errorCode }: {
       <input type="hidden" name="next" value={next}/>
       {autoStart && <input type="hidden" name="entry" value="qr"/>}
       <AutoGuestStart enabled={automatic}/>
-      <GuestSubmit isJoining={next.startsWith("/boards/")} isBrowsing={next !== "/?create=1" && !next.startsWith("/boards/")}/>
+      <GuestSubmit />
       {failure && <p role="alert">{errorMessages[failure] ?? errorMessages.unavailable}</p>}
     </form>
     {automatic && <noscript><p>自動で開かない場合は、上のボタンを押してください。</p></noscript>}
     <p className="guest-note">ゲストの利用情報はこのブラウザで保持します。利用を終了したり、Cookieを削除したりすると、同じゲストとして戻れなくなります。</p>
-    <p><Link href={`/login?${new URLSearchParams({next})}`}>アカウントでログイン</Link></p>
-    <p><Link href="/">掲示板一覧を見る</Link></p>
+    <p><Link className="guest-account-button" href={`/login?${new URLSearchParams({next})}`}>アカウントでログイン</Link></p>
   </section>;
 }

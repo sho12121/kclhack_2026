@@ -26,3 +26,11 @@
 .room .danger { background: #b91c1c; border-color: #b91c1c; margin-top: 20px; }
 .room .deleteComment { background: white; border-color: #b91c1c; color: #b91c1c; padding: 6px 10px; margin-top: 10px; font-size: 13px; }
 @media (max-width: 600px) { .heading, .panel { padding: 18px; } .formFooter button { width: 100%; } }
+
+.replyReference { margin: 10px 0; padding: 8px 12px; border-left: 3px solid #93c5fd; color: #475569; background: #eff6ff; font-size: 12px; overflow-wrap: anywhere; }
+.replyButton { min-height: 44px; margin-right: 12px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; color: #1d4ed8; background: white; font: inherit; font-size: 12px; }
+.replyComposer { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 14px; border-left: 3px solid #2563eb; border-radius: 8px; background: #eff6ff; font-size: 13px; }
+.replyComposer > div { min-width: 0; }
+.replyComposer p { max-height: 80px; overflow: auto; margin: 6px 0 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.replyComposer button { flex-shrink: 0; }
+@media(max-width: 480px) { .replyComposer { flex-direction: column; } }

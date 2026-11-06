@@ -37,7 +37,7 @@
 .coverPhotoWrapper {
   height: 160px;
   position: relative;
-  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 40%, #f97316 80%, #fbbf24 100%);
+  background: #e2e8f0;
   background-size: cover;
   background-position: center;
   overflow: hidden;
@@ -103,6 +103,7 @@
 }
 
 .profileName {
+  overflow-wrap: anywhere;
   font-size: 24px;
   font-weight: 700;
   color: #0f172a;
@@ -586,3 +587,6 @@
   .layoutContainer { flex-direction: column; }
   .centerColumn { padding: 20px 12px; max-width: none; }
 }
+
+.profilePrompt { display: block; margin: 8px 0 16px; padding: 0; border: none; background: transparent; color: #64748b; font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.profilePrompt:hover { color: #475569; text-decoration: underline; }

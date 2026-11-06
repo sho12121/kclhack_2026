@@ -1,5 +1,15 @@
 import React from "react";
 
+export function DefaultAvatar({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="100%" height="100%" viewBox="0 0 120 120" role="img" aria-label="初期プロフィールアイコン" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="60" cy="60" r="60" fill="#e2e8f0" />
+      <circle cx="60" cy="44" r="19" fill="#64748b" />
+      <path d="M25 101v-9a35 25 0 0 1 70 0v9" fill="#64748b" />
+    </svg>
+  );
+}
+
 // 夕暮れの街並みと空のカバー画像
 export function CoverArtwork({ className }: { className?: string }) {
   return (

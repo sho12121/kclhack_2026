@@ -4,5 +4,7 @@ export default async function GuestPage({ searchParams }: {
   searchParams: Promise<{ error?: string | string[]; next?: string | string[] }>;
 }) {
   const params = await searchParams;
-  return <GuestEntry next={safeAuthRedirect(params.next,"/?create=1")} errorCode={typeof params.error === "string" ? params.error : undefined}/>;
+  const requestedNext = safeAuthRedirect(params.next, "/");
+  const next = requestedNext === "/?create=1" ? "/" : requestedNext;
+  return <GuestEntry next={next} errorCode={typeof params.error === "string" ? params.error : undefined}/>;
 }

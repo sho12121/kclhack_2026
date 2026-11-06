@@ -1,5 +1,6 @@
 export type UserProfile = {
   id: string;
+  userNumber?: string;
   nickname: string;
   bio: string;
   gender: string;

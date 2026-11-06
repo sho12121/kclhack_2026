@@ -3,7 +3,7 @@ export type PublicProfile = {
   followCount: number; followerCount: number; isFollowing: boolean;
 };
 export type AppNotification = {
-  id: string; kind: "follow" | "board_created" | "board_reply" | "board_deleted";
+  id: string; kind: "follow" | "board_created" | "board_reply" | "board_deleted" | "board_invitation" | "comment_reply";
   actorId: string | null; actorName: string; boardId: string | null; boardTitle: string | null;
   createdAt: string; readAt: string | null;
 };

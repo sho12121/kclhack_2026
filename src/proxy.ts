@@ -48,6 +48,8 @@ export const config = {
   matcher: [
     "/",
     "/login/:path*",
+    "/signup/:path*",
+    "/auth/:path*",
     "/guest/:path*",
     "/account/:path*",
     "/users/:path*",

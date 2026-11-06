@@ -21,6 +21,8 @@ export function databaseError(value: unknown): DatabaseError {
     NOT_STARTED: ["開始日時になると投稿できます。", 409],
     START_IN_PAST: ["開始日時を現在より後に設定し直してください。", 400],
     INVALID_MESSAGE: ["メッセージを1〜2000文字で入力してください。", 400],
+    REPLY_TARGET_NOT_FOUND: ["返信先のコメントが見つからないか、削除されています。返信先を解除して再度お試しください。", 400],
+    INVITEE_NOT_FOLLOWED: ["招待できるのはフォロー中の登録ユーザーです。選び直してください。", 400],
     INVALID_INPUT: ["入力内容を確認してください。", 400],
   };
   if (Object.hasOwn(known, message)) return new DatabaseError(...known[message]);

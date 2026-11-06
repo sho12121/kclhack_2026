@@ -1,0 +1,8 @@
+.wrapper { margin: 12px 0; }
+.button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 9px 14px; border: 1px solid #cbd5e1; border-radius: 10px; background: white; color: #475569; font: inherit; font-size: 13px; cursor: pointer; }
+.button span { display: flex; }
+.button[aria-pressed="true"] { color: #1d4ed8; background: #eff6ff; border-color: #93c5fd; }
+.button[aria-pressed="true"] svg { fill: #dbeafe; }
+.button:hover { background: #eff6ff; }
+.button:disabled { opacity: .6; cursor: wait; }
+.error { color: #b91c1c; font-size: 13px; overflow-wrap: anywhere; }

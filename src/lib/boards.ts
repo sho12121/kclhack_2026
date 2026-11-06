@@ -15,6 +15,13 @@ export async function listBoards(id?: string): Promise<StoredBoard[]> {
   const { data, error } = await readDatabase(() => supabase.rpc("cinema_list_boards", { p_board_id: id ?? null }));
   if (error) throw databaseError(error);
   if (!Array.isArray(data)) throw databaseError(null);
+  const auth = await getAuth();
+  const favoriteIds = new Set<string>();
+  if (!auth.error && auth.data?.claims.sub && auth.data.claims.is_anonymous !== true) {
+    const favorites = await readDatabase(() => supabase.from("board_favorites").select("board_id").eq("user_id", auth.data!.claims.sub));
+    if (favorites.error) throw databaseError(favorites.error);
+    for (const favorite of favorites.data ?? []) favoriteIds.add(favorite.board_id);
+  }
   return data.map((value: unknown) => {
     if (!record(value) || !isUuid(value.id) || typeof value.title !== "string" || !record(value.movie) || typeof value.movie.tmdbId !== "number" || typeof value.movie.title !== "string" || typeof value.starts_at !== "string" || typeof value.created_at !== "string") throw databaseError(null);
     if (typeof value.allow_guests !== "boolean" || !isUuid(value.created_by) || typeof value.creator_name !== "string" || typeof value.creator_is_guest !== "boolean") throw databaseError({code:"42703"});
@@ -24,7 +31,7 @@ export async function listBoards(id?: string): Promise<StoredBoard[]> {
       releaseDate: typeof value.movie.releaseDate === "string" ? value.movie.releaseDate : null,
       genres: Array.isArray(value.movie.genres) ? value.movie.genres.filter((g): g is string => typeof g === "string") : [],
     };
-    return { id: value.id, title: value.title, movie, capacity: value.capacity === null ? null : Number(value.capacity), startsAt: value.starts_at, createdAt: value.created_at, participantCount: Number(value.participant_count), allowGuests: value.allow_guests, ownerId: value.created_by, ownerName: value.creator_name, ownerIsGuest: value.creator_is_guest, isMember: value.is_member === true, isOwner: value.is_owner === true };
+    return { isFavorite: favoriteIds.has(value.id), id: value.id, title: value.title, movie, capacity: value.capacity === null ? null : Number(value.capacity), startsAt: value.starts_at, createdAt: value.created_at, participantCount: Number(value.participant_count), allowGuests: value.allow_guests, ownerId: value.created_by, ownerName: value.creator_name, ownerIsGuest: value.creator_is_guest, isMember: value.is_member === true, isOwner: value.is_owner === true };
   });
 }
 
