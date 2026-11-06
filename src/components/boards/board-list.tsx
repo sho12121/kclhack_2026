@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
+import { parseBoardList } from "@/lib/board-list-data";
 import type { BoardSummary } from "@/types/board";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,11 +10,14 @@ import { CalendarIcon, ChatIcon, FilmIcon, UsersIcon } from "@/components/ui/ico
 import styles from "./boards.module.css";
 import { FavoriteButton } from "./favorite-button";
 
-export function BoardList({ boards, isSample = false, initialNow }: {
+export function BoardList({ boards: initialBoards, isSample = false, initialNow }: {
   boards: BoardSummary[];
   isSample?: boolean;
   initialNow: number;
 }) {
+  const [snapshot, setSnapshot] = useState<{ source: BoardSummary[]; items: BoardSummary[] } | null>(null);
+  const [refreshError, setRefreshError] = useState("");
+  const boards = snapshot && snapshot.source === initialBoards ? snapshot.items : initialBoards;
   const [now, setNow] = useState(initialNow);
   const [noticeBoardId, setNoticeBoardId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -30,7 +34,7 @@ export function BoardList({ boards, isSample = false, initialNow }: {
     const bStarted = Date.parse(b.startsAt) <= now;
     if (aStarted !== bStarted) return aStarted ? -1 : 1;
     const difference = Date.parse(a.createdAt) - Date.parse(b.createdAt);
-    return (sortOrder === "newest" ? -difference : difference) || a.id.localeCompare(b.id);
+      return (sortOrder === "newest" ? -difference : difference) || a.id.localeCompare(b.id);
   });
   const hasFilters = statusFilter !== "all" || genreFilter !== "";
 
@@ -44,17 +48,44 @@ export function BoardList({ boards, isSample = false, initialNow }: {
     return () => window.clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    if (isSample) return;
+    const controller = new AbortController();
+    let busy = false;
+    async function refresh() {
+      if (busy || controller.signal.aborted || document.visibilityState !== "visible") return;
+      busy = true;
+      try {
+        const response = await fetch("/api/boards", { cache: "no-store", signal: controller.signal });
+        const data = await response.json();
+        if (!response.ok) throw new Error("一覧を更新できませんでした。");
+        const next = parseBoardList(data);
+        if (!controller.signal.aborted) { setSnapshot({ source: initialBoards, items: next }); setRefreshError(""); }
+      } catch {
+        if (!controller.signal.aborted) setRefreshError("一覧を更新できませんでした。表示済みの内容を残し、次の自動更新で再試行します。");
+      } finally { busy = false; }
+    }
+    // 先読みした一覧も、画面を開いた時点で最新情報を確認する。
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 15_000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => { controller.abort(); window.clearInterval(timer); document.removeEventListener("visibilitychange", refresh); };
+  }, [initialBoards, isSample]);
+
+
   return (
     <section aria-labelledby="board-list-title">
       <div className={styles.listHeading}>
         <h2 id="board-list-title"><ChatIcon />掲示板一覧</h2>
         <span role="status" aria-live="polite" aria-atomic="true">{visibleBoards.length}件{hasFilters && ` / 全${boards.length}件`}</span>
       </div>
+      {refreshError && <p className={styles.refreshError} role="status">{refreshError}</p>}
       <div className={styles.boardFilters} role="group" aria-label="掲示板の絞り込みと並び替え">
         <div>
           <label htmlFor={`${id}-genre`}>映画のジャンル</label>
           <select id={`${id}-genre`} value={genreFilter} onChange={event => setGenreFilter(event.target.value)}>
             <option value="">すべてのジャンル</option>
+            {genreFilter && !genres.includes(genreFilter) && <option value={genreFilter}>{genreFilter}</option>}
             {genres.map(genre => <option key={genre} value={genre}>{genre}</option>)}
           </select>
         </div>

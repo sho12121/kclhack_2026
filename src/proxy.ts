@@ -56,6 +56,7 @@ export const config = {
     "/notifications/:path*",
     "/api/notifications/:path*",
     "/boards/:path*",
+    "/api/boards",
     "/api/boards/:path*",
     "/playground/:path*",
   ],
