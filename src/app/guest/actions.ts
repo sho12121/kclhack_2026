@@ -5,10 +5,11 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { safeAuthRedirect } from "@/lib/auth-redirect";
 
-/** GETではユーザーを作らず、本人が開始ボタンを押したときだけ発行する。 */
+/** ゲスト発行はPOSTだけ。QR入口ではブラウザ側がこのフォームを自動送信する。 */
 export async function startGuest(form: FormData) {
   const next = safeAuthRedirect(form.get("next"), "/?create=1");
-  const errorPath = (error: string) => `/guest?${new URLSearchParams({ error, next })}`;
+  const entry = form.get("entry") === "qr" ? "/guest/qr" : "/guest";
+  const errorPath = (error: string) => `${entry}?${new URLSearchParams({ error, next })}`;
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
     redirect(errorPath("configuration"));
   }
