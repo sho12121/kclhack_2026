@@ -14,7 +14,7 @@ export const sampleBoards: BoardSummary[] = [
       genres: ["ホラー", "サイエンスフィクション", "アドベンチャー"],
     },
     capacity: 4,
-    participantCount: 2,
+    allowGuests: true, participantCount: 2,
     startsAt: "2026-10-30T20:00:00+09:00",
   },
   {
@@ -29,7 +29,7 @@ export const sampleBoards: BoardSummary[] = [
       genres: ["アニメーション", "ファミリー", "アドベンチャー", "ファンタジー"],
     },
     capacity: 6,
-    participantCount: 4,
+    allowGuests: true, participantCount: 4,
     startsAt: "2026-11-02T19:00:00+09:00",
   },
   {
@@ -44,7 +44,7 @@ export const sampleBoards: BoardSummary[] = [
       genres: ["ファミリー", "ドラマ"],
     },
     capacity: null,
-    participantCount: 3,
+    allowGuests: true, participantCount: 3,
     startsAt: "2026-11-03T21:00:00+09:00",
   },
 ];

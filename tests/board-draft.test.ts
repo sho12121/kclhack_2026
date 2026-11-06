@@ -67,3 +67,9 @@ test("開始日の加減: 選択日を基準に日・月を移動し、月末と
   assert.equal(shiftBoardDate("2026-12-31", 1, "months"), "2027-01-31");
   assert.equal(shiftBoardDate("2026-02-30", 1, "months"), null);
 });
+
+test("掲示板: ゲスト受け入れ設定を確認内容に保持する", () => {
+  assert.equal(validateBoardDraft({...input,allowGuests:false},now).draft?.allowGuests,false);
+  assert.equal(validateBoardDraft({...input,allowGuests:true},now).draft?.allowGuests,true);
+  assert.equal(validateBoardDraft(input,now).draft?.allowGuests,true);
+});

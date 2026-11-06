@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent } from "react";
-import { joinBoard, postMessage } from "@/app/boards/actions";
+import { joinBoard, postMessage, deleteComment, deleteBoard } from "@/app/boards/actions";
 import { formatBoardDate } from "@/lib/board-draft";
 import type { BoardMessage, StoredBoard } from "@/types/board";
 import styles from "./board-room.module.css";
@@ -12,8 +12,8 @@ function mergeMessages(current: BoardMessage[], incoming: BoardMessage[]) {
     .sort((a, b) => BigInt(a.id) < BigInt(b.id) ? -1 : BigInt(a.id) > BigInt(b.id) ? 1 : 0);
 }
 
-export function BoardRoom({ board, viewerId, initialMessages, initialNow }: {
-  board: StoredBoard; viewerId: string; initialMessages: BoardMessage[]; initialNow: number;
+export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, initialNow }: {
+  board: StoredBoard; viewerId: string; viewerIsGuest: boolean; initialMessages: BoardMessage[]; initialNow: number;
 }) {
   const [now, setNow] = useState(initialNow);
   const [messages, setMessages] = useState(initialMessages);
@@ -22,36 +22,42 @@ export function BoardRoom({ board, viewerId, initialMessages, initialNow }: {
   const [pollError, setPollError] = useState<string | null>(null);
   const [hasOlder, setHasOlder] = useState(initialMessages.length === 50);
   const [loadingOlder, setLoadingOlder] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
   const [pending, startTransition] = useTransition();
   const latestId = useRef(initialMessages.at(-1)?.id ?? "0");
+  const messagesRef = useRef(initialMessages);
   const activeRequest = useRef<AbortController | null>(null);
   const logRef = useRef<HTMLDivElement | null>(null);
   const stayAtBottom = useRef(true);
   const isStarted = Date.parse(board.startsAt) <= now;
   const isFull = board.capacity !== null && board.participantCount >= board.capacity;
+  const guestBlocked = viewerIsGuest && !board.allowGuests;
 
   const refreshMessages = useCallback(async () => {
-    if (!board.isMember) return;
+    if (!board.isMember || guestBlocked || unavailable) return;
     if (activeRequest.current) return;
     const controller = new AbortController();
     activeRequest.current = controller;
     try {
-      const response = await fetch(`/api/boards/${board.id}/messages?after=${latestId.current}`, { cache: "no-store", signal: controller.signal });
+      const oldestId = messagesRef.current[0]?.id ?? latestId.current;
+      const response = await fetch(`/api/boards/${board.id}/messages?after=${latestId.current}&visible_after=${oldestId}`, { cache: "no-store", signal: controller.signal });
       const data = await response.json();
+      if (response.status === 404) { setUnavailable(true); return; }
       if (!response.ok || !Array.isArray(data.messages)) throw new Error(data.error ?? "会話を取得できませんでした。");
       if (controller.signal.aborted) return;
       const incoming = data.messages as BoardMessage[];
       if (incoming.length) {
         latestId.current = incoming.at(-1)!.id;
-        setMessages(current => mergeMessages(current, incoming));
       }
+      const deleted = new Set<string>(Array.isArray(data.deletedIds) ? data.deletedIds : []);
+      setMessages(current => mergeMessages(current, incoming).map(message => deleted.has(message.id) ? {...message,content:"削除されたコメントです。",deletedAt:message.deletedAt ?? "deleted"} : message));
       setPollError(null);
     } catch (error) {
       if (!controller.signal.aborted) setPollError(error instanceof Error ? error.message : "会話を更新できませんでした。");
     } finally {
       if (activeRequest.current === controller) activeRequest.current = null;
     }
-  }, [board.id, board.isMember]);
+  }, [board.id, board.isMember, guestBlocked, unavailable]);
 
   useEffect(() => {
     const clock = window.setInterval(() => setNow(Date.now()), 1000);
@@ -59,8 +65,22 @@ export function BoardRoom({ board, viewerId, initialMessages, initialNow }: {
     return () => { window.clearInterval(clock); window.clearInterval(poll); activeRequest.current?.abort(); };
   }, [refreshMessages]);
   useEffect(() => {
+    messagesRef.current = messages;
     if (logRef.current && stayAtBottom.current) logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [messages]);
+
+  function removeComment(id: string, asModerator: boolean) {
+    const confirmation = asModerator
+      ? "掲示板管理者として、このコメントを削除しますか？本文は元に戻せません。"
+      : "このコメントを削除しますか？本文は元に戻せません。";
+    if (!window.confirm(confirmation)) return;
+    setError(null); startTransition(async () => {
+      try {
+        const result = await deleteComment(id); if (result.error) { setError(result.error); return; }
+        setMessages(current => current.map(message => message.id === id ? {...message,content:"削除されたコメントです。",deletedAt:new Date().toISOString()} : message));
+      } catch { setError("コメントを削除できませんでした。"); }
+    });
+  }
 
   async function loadOlder() {
     if (loadingOlder || !messages.length) return;
@@ -102,12 +122,22 @@ export function BoardRoom({ board, viewerId, initialMessages, initialNow }: {
       <span className={styles.status}>{isStarted ? "開催中" : "開催予定"}</span>
       <h1>{board.title}</h1>
       <p className={styles.movie}>{board.movie.title}</p>
+      <p>{board.allowGuests ? "ゲスト参加OK" : "登録ユーザー限定"} · 作成者：{board.ownerIsGuest ? board.ownerName : <Link href={`/users/${board.ownerId}`}>{board.ownerName}</Link>}</p>
       <dl className={styles.info}>
         <div><dt>参加人数・定員</dt><dd>{board.participantCount}人 / {board.capacity === null ? "制限なし" : `${board.capacity}人`}</dd></div>
         <div><dt>開始日時</dt><dd>{formatBoardDate(board.startsAt)}</dd></div>
       </dl>
+      {board.isOwner && !unavailable && <button type="button" className={styles.danger} disabled={pending} onClick={() => {
+        if (!window.confirm("この掲示板を削除しますか？参加者全員の会話と参加登録も削除され、元に戻せません。")) return;
+        setError(null);startTransition(async () => {
+          try { const result = await deleteBoard(board.id); if (result.error) setError(result.error); }
+          catch { setError("掲示板を削除できませんでした。"); }
+        });
+      }}>自分の掲示板を削除する</button>}
     </header>
-    {!board.isMember ? <section className={styles.panel}>
+    {unavailable ? <section className={styles.panel} role="status"><h2>この掲示板は削除されました</h2><Link href="/">掲示板一覧へ戻る</Link></section>
+    : guestBlocked ? <section className={styles.panel}><h2>登録ユーザー限定の掲示板です</h2><p>ゲストとして参加することはできません。</p><Link href={`/login?${new URLSearchParams({next:`/boards/${board.id}`})}`}>通常アカウントでログインする</Link></section>
+    : !board.isMember ? <section className={styles.panel}>
       <h2>この掲示板に参加する</h2>
       <p>参加すると、参加者だけが見られる会話を閲覧できます。投稿は開始日時から可能です。</p>
       <button disabled={pending || isFull} onClick={() => {
@@ -126,8 +156,9 @@ export function BoardRoom({ board, viewerId, initialMessages, initialNow }: {
         onScroll={() => { const node = logRef.current; if (node) stayAtBottom.current = node.scrollHeight - node.scrollTop - node.clientHeight < 80; }}>
         {messages.length === 0 && <p className={styles.empty}>まだ会話はありません。{isStarted ? "最初の感想を投稿してみましょう。" : "開始日時になったら会話を始めましょう。"}</p>}
         {messages.map(message => <article key={message.id} className={`${styles.message} ${message.authorId === viewerId ? styles.own : ""}`}>
-          <div className={styles.messageMeta}><strong>{message.authorName}</strong><time dateTime={message.createdAt}>{formatBoardDate(message.createdAt)}</time></div>
+          <div className={styles.messageMeta}><strong>{message.authorIsGuest === false ? <Link href={`/users/${message.authorId}`}>{message.authorName}</Link> : message.authorName}</strong><time dateTime={message.createdAt}>{formatBoardDate(message.createdAt)}</time></div>
           <p>{message.content}</p>
+          {(message.authorId === viewerId || board.isOwner) && !message.deletedAt && <button type="button" className={styles.deleteComment} disabled={pending} onClick={()=>removeComment(message.id, message.authorId !== viewerId)}>{message.authorId === viewerId ? "自分のコメントを削除" : "管理者としてコメントを削除"}</button>}
         </article>)}
       </div>
       {pollError && <p role="alert" className={styles.error}>{pollError} <button type="button" className={styles.secondary} onClick={() => void refreshMessages()}>再読み込み</button></p>}

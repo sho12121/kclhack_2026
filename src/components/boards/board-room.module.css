@@ -23,4 +23,6 @@
 .formFooter { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center; }
 .formFooter span { color: var(--muted); font-size: 13px; }
 .error { color: #b91c1c; line-height: 1.8; }
+.room .danger { background: #b91c1c; border-color: #b91c1c; margin-top: 20px; }
+.room .deleteComment { background: white; border-color: #b91c1c; color: #b91c1c; padding: 6px 10px; margin-top: 10px; font-size: 13px; }
 @media (max-width: 600px) { .heading, .panel { padding: 18px; } .formFooter button { width: 100%; } }

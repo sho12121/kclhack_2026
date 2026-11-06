@@ -27,6 +27,8 @@ export function SiteSidebar({ active, onEditProfile }: SiteSidebarProps) {
             <SettingsIcon /><span>プロフィール編集</span>
           </button>
         )}
+        <Link href="/users" className={styles.navLink}><UserIcon/><span>ユーザーを探す</span></Link>
+        <Link href="/notifications" className={styles.navLink}><ChatIcon/><span>通知</span></Link>
       </nav>
       <div className={styles.sidebarFooter}>
         <CameraProjectorWatermark />

@@ -10,6 +10,10 @@ export function databaseError(value: unknown): DatabaseError {
   const message = typeof error.message === "string" ? error.message : "";
   const known: Record<string, [string, number]> = {
     AUTH_REQUIRED: ["ログインまたはゲスト利用を開始してください。", 401],
+    ACCOUNT_REQUIRED: ["この機能には通常アカウントでのログインが必要です。", 403],
+    GUEST_NOT_ALLOWED: ["この掲示板は登録ユーザー限定です。通常アカウントでログインしてください。", 403],
+    USER_NOT_FOUND: ["ユーザーが見つかりません。", 404],
+    MESSAGE_NOT_FOUND: ["コメントが見つかりません。", 404],
     FORBIDDEN: ["この操作は許可されていません。", 403],
     BOARD_NOT_FOUND: ["掲示板が見つかりません。", 404],
     BOARD_FULL: ["定員に達したため参加できません。", 409],

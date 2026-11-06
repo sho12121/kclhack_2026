@@ -217,6 +217,7 @@ export function BoardCreateForm({ initialNow }: { initialNow: number }) {
   // 定員（スライダー・ステッパー・テキスト入力連動）
   const [capacity, setCapacity] = useState("4");
   const [unlimitedCapacity, setUnlimitedCapacity] = useState(false);
+  const [allowGuests, setAllowGuests] = useState(true);
 
   // 開始日時（初期値: 7日後の23時59分）
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -310,6 +311,7 @@ export function BoardCreateForm({ initialNow }: { initialNow: number }) {
       movie,
       capacity: unlimitedCapacity ? "unlimited" : capacity,
       startDateTime: fullStartDateTime,
+      allowGuests,
     });
     setError(result.error);
     setPreview(result.draft);
@@ -450,6 +452,16 @@ export function BoardCreateForm({ initialNow }: { initialNow: number }) {
 
       {/* 掲示板作成フォーム */}
       <form id={`${id}-form`} onSubmit={handleConfirm}>
+        <div className={styles.field}>
+          <label className={styles.unlimitedOption}>
+            <input type="checkbox" checked={allowGuests} onChange={event => {
+              setAllowGuests(event.target.checked);
+              invalidatePreview();
+            }} />
+            ゲストユーザーの参加を受け入れる
+          </label>
+          <small className={styles.fieldHelp}>オフにすると、通常アカウントでログインした人だけが参加できます。ゲストとして作成する場合はオンにしてください。</small>
+        </div>
         {/* 定員設定（スライダー・ステッパー・テキスト入力連動） */}
         <div className={styles.field}>
           <div className={styles.labelRow}>
@@ -725,6 +737,7 @@ export function BoardCreateForm({ initialNow }: { initialNow: number }) {
           </div>
           <p role="status" className={styles.previewStatus}>内容を確認して「作成する」を押してください。</p>
           <dl className={styles.previewList}>
+            <div className={styles.previewItem}><dt>参加できる人</dt><dd>{preview.allowGuests ? "登録ユーザー・ゲスト" : "登録ユーザーのみ"}</dd></div>
             <div className={styles.previewItem}>
               <dt>タイトル</dt>
               <dd className={styles.previewTitleValue}>{preview.title}</dd>
@@ -773,6 +786,7 @@ export function BoardCreateForm({ initialNow }: { initialNow: number }) {
                 form.set("tmdbId", String(preview.movie.tmdbId));
                 form.set("capacity", preview.capacity === null ? "unlimited" : String(preview.capacity));
                 form.set("startDateTime", fullStartDateTime);
+                form.set("allowGuests", String(preview.allowGuests));
                 startCreating(async () => {
                   try {
                     const result = await createBoard(form);

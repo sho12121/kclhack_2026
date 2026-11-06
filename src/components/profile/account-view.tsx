@@ -6,6 +6,7 @@ import styles from "./account.module.css";
 import { UserProfile, UserPost, FavoriteMovie, ActivityItem } from "@/types/profile";
 import { SiteSidebar } from "@/components/layout/site-sidebar";
 import { updateProfile } from "@/app/account/actions";
+import { DeleteCommentButton } from "@/components/social/delete-comment-button";
 import {
   ChatIcon,
   UserIcon,
@@ -33,14 +34,17 @@ export type AccountViewProps = {
   initialProfile: UserProfile;
   posts?: UserPost[];
   postsError?: string;
+  followError?: string;
 };
 
-export function AccountView({ initialProfile, posts = [], postsError }: AccountViewProps) {
+export function AccountView({ initialProfile, posts = [], postsError, followError }: AccountViewProps) {
   const [profile, setProfile] = useState<UserProfile>(initialProfile);
   const [activeTab, setActiveTab] = useState<"posts" | "favorites">("posts");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [removedPostIds, setRemovedPostIds] = useState<string[]>([]);
+  const visiblePosts = posts.filter(post => !removedPostIds.includes(post.id));
 
   // 編集フォーム状態
   const [editForm, setEditForm] = useState({
@@ -76,7 +80,7 @@ export function AccountView({ initialProfile, posts = [], postsError }: AccountV
       try {
         const res = await updateProfile(formData);
         if (res.success && res.profile) {
-          setProfile(res.profile);
+          setProfile({...res.profile,followCount:profile.followCount,followerCount:profile.followerCount});
           setIsEditModalOpen(false);
         } else setProfileError(res.error || "プロフィールを保存できませんでした。");
       } catch { setProfileError("通信に失敗しました。入力内容はそのままで、もう一度保存をお試しください。"); }
@@ -136,13 +140,11 @@ export function AccountView({ initialProfile, posts = [], postsError }: AccountV
                 <p className={styles.profileBio}>{profile.bio}</p>
 
                 <div className={styles.followMetrics}>
-                  <span>
-                    フォロー <strong className={styles.followNumber}>{profile.followCount}</strong>
-                  </span>
-                  <span>
-                    フォロワー <strong className={styles.followNumber}>{profile.followerCount}</strong>
-                  </span>
+                  <Link href={`/users/${profile.id}?tab=following`}>フォロー <strong className={styles.followNumber}>{followError ? "—" : profile.followCount}</strong></Link>
+                  <Link href={`/users/${profile.id}?tab=followers`}>フォロワー <strong className={styles.followNumber}>{followError ? "—" : profile.followerCount}</strong></Link>
                 </div>
+                {followError && <p role="alert">{followError}</p>}
+                <p>他の人に公開されるのは、ニックネーム・自己紹介・好きなジャンル・ひとことです。生年月日・性別・居住地は自分だけが閲覧できます。</p>
               </div>
             </div>
           </div>
@@ -173,8 +175,9 @@ export function AccountView({ initialProfile, posts = [], postsError }: AccountV
           {activeTab === "posts" ? (
             <div className={styles.postList}>
               {postsError && <p role="alert">{postsError}</p>}
-              {!postsError && posts.length === 0 && <p>まだ会話への投稿はありません。</p>}
-              {posts.map((post) => (
+              {!postsError && visiblePosts.length === 0 && <p>まだ会話への投稿はありません。</p>}
+              {visiblePosts.length > 0 && <p>最近の投稿を最大50件表示しています。</p>}
+              {visiblePosts.map((post) => (
                 <article key={post.id} className={styles.postCard}>
                   <div className={styles.postPoster}>
                     {renderPoster(post.posterBg, styles.postPoster)}
@@ -191,6 +194,7 @@ export function AccountView({ initialProfile, posts = [], postsError }: AccountV
                       </div>
                       <ChevronRightIcon className={styles.postArrow} />
                     </div>
+                    <DeleteCommentButton id={post.id} onDeleted={() => setRemovedPostIds(current=>[...current,post.id])}/>
                   </div>
                 </article>
               ))}

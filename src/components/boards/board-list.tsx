@@ -104,6 +104,7 @@ export function BoardList({ boards, isSample = false, initialNow }: {
                       {isStarted ? "開催中" : "開催予定"}
                     </span>
                     <h3>{board.title}</h3>
+                    <p>{board.allowGuests ? "ゲスト参加OK" : "登録ユーザー限定"}</p>
                     <p className={styles.boardMovie}><FilmIcon />{board.movie.title}</p>
                     {board.movie.genres && <ul className={styles.genreTags} aria-label="映画のジャンル">
                       {board.movie.genres.map(genre => <li key={genre}>{genre}</li>)}

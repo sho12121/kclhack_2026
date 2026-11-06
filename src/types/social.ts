@@ -1,0 +1,10 @@
+export type PublicProfile = {
+  id: string; nickname: string; bio: string; favoriteGenres: string; motto: string;
+  followCount: number; followerCount: number; isFollowing: boolean;
+};
+export type AppNotification = {
+  id: string; kind: "follow" | "board_created" | "board_reply" | "board_deleted";
+  actorId: string | null; actorName: string; boardId: string | null; boardTitle: string | null;
+  createdAt: string; readAt: string | null;
+};
+export type NotificationInbox = { items: AppNotification[]; unreadCount: number };
