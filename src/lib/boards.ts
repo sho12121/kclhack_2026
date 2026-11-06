@@ -12,16 +12,23 @@ export function isUuid(value: unknown): value is string {
 function record(value: unknown): value is Record<string, unknown> { return typeof value === "object" && value !== null; }
 export async function listBoards(id?: string): Promise<StoredBoard[]> {
   const supabase = await createClient();
-  const { data, error } = await readDatabase(() => supabase.rpc("cinema_list_boards", { p_board_id: id ?? null }));
+  // 募集情報と本人のお気に入りは互いを待たずに取得する。
+  const favoritesPromise = (async () => {
+    const auth = await getAuth();
+    const ids = new Set<string>();
+    if (!auth.error && auth.data?.claims.sub && auth.data.claims.is_anonymous !== true) {
+      const favorites = await readDatabase(() => supabase.from("board_favorites").select("board_id").eq("user_id", auth.data!.claims.sub));
+      if (favorites.error) throw databaseError(favorites.error);
+      for (const favorite of favorites.data ?? []) ids.add(favorite.board_id);
+    }
+    return ids;
+  })();
+  const [{ data, error }, favoriteIds] = await Promise.all([
+    readDatabase(() => supabase.rpc("cinema_list_boards", { p_board_id: id ?? null })),
+    favoritesPromise,
+  ]);
   if (error) throw databaseError(error);
   if (!Array.isArray(data)) throw databaseError(null);
-  const auth = await getAuth();
-  const favoriteIds = new Set<string>();
-  if (!auth.error && auth.data?.claims.sub && auth.data.claims.is_anonymous !== true) {
-    const favorites = await readDatabase(() => supabase.from("board_favorites").select("board_id").eq("user_id", auth.data!.claims.sub));
-    if (favorites.error) throw databaseError(favorites.error);
-    for (const favorite of favorites.data ?? []) favoriteIds.add(favorite.board_id);
-  }
   return data.map((value: unknown) => {
     if (!record(value) || !isUuid(value.id) || typeof value.title !== "string" || !record(value.movie) || typeof value.movie.tmdbId !== "number" || typeof value.movie.title !== "string" || typeof value.starts_at !== "string" || typeof value.created_at !== "string") throw databaseError(null);
     if (typeof value.allow_guests !== "boolean" || !isUuid(value.created_by) || typeof value.creator_name !== "string" || typeof value.creator_is_guest !== "boolean") throw databaseError({code:"42703"});

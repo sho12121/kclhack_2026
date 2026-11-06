@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createBoard } from "@/app/boards/actions";
 import { useEffect, useId, useRef, useState, useTransition, type FormEvent, type KeyboardEvent } from "react";
+import { CalendarIcon, ClockIcon } from "@/components/ui/icons";
 import { MovieSearch } from "@/components/movies/movie-search";
 import { formatBoardDate, shiftBoardDate, MAX_BOARD_CAPACITY, MAX_BOARD_TITLE_LENGTH, MIN_BOARD_CAPACITY, validateBoardDraft, validateBoardStartDateTime } from "@/lib/board-draft";
 import type { BoardDraft } from "@/types/board";
@@ -68,16 +69,16 @@ function IntegratedNumberDropdown({
 
   // 外側クリックでドロップダウンを閉じる
   useEffect(() => {
-    function handleOutsideClick(e: MouseEvent) {
+    function handleOutsideClick(e: PointerEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     }
     if (isOpen) {
-      document.addEventListener("mousedown", handleOutsideClick);
+      document.addEventListener("pointerdown", handleOutsideClick);
     }
     return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("pointerdown", handleOutsideClick);
     };
   }, [isOpen]);
 
@@ -101,7 +102,11 @@ function IntegratedNumberDropdown({
 
   return (
     <div className={styles.comboContainer} ref={containerRef} onKeyDown={handleKeyDown}
-      onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setIsOpen(false); }}>
+      onBlur={(event) => {
+        // タッチで候補やスクロール領域に触れるとrelatedTargetがnullになる。
+        // その場合は閉じず、外側へのpointerdownで閉じる。
+        if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) setIsOpen(false);
+      }}>
       <div className={styles.comboInputBox}>
         <input
           id={id}
@@ -154,7 +159,8 @@ function IntegratedNumberDropdown({
       <span className={styles.comboUnitLabel}>{unit}</span>
 
       {isOpen && (
-        <ul id={`${id}-options`} className={styles.comboDropdown} role="listbox" aria-label={`${label}の候補一覧`}>
+        <ul id={`${id}-options`} className={styles.comboDropdown} role="listbox" aria-label={`${label}の候補一覧`}
+          onMouseDown={event => event.preventDefault()}>
           {options.map((opt, index) => (
             <li
               key={opt.value}
@@ -162,8 +168,7 @@ function IntegratedNumberDropdown({
               role="option"
               aria-selected={opt.value === formattedCurrent}
               className={`${styles.comboOption} ${index === activeIndex ? styles.comboOptionSelected : ""}`}
-              onPointerDown={(e) => {
-                e.preventDefault();
+              onClick={() => {
                 onChange(opt.value);
                 setIsOpen(false);
               }}
@@ -587,7 +592,7 @@ export function BoardCreateForm({ initialNow, inviteCandidates = [], invitationE
             {/* 1. 操作しやすい日付選択UI */}
             <div className={styles.dateSelectBlock}>
               <div className={styles.dateBlockHeader}>
-                <span className={styles.blockTitle}>📅 日付を設定</span>
+                <span className={styles.blockTitle}><CalendarIcon /> 日付を設定</span>
               </div>
 
               <div className={styles.quickChipsList}>
@@ -668,7 +673,7 @@ export function BoardCreateForm({ initialNow, inviteCandidates = [], invitationE
 
             {/* 2. ドロップダウンと入力が1つに統合された、時間と分の2つの入力欄 */}
             <div className={styles.timeSelectBlock}>
-              <span className={styles.blockTitle}>⏰ 時刻を設定（時間・分）</span>
+              <span className={styles.blockTitle}><ClockIcon /> 時刻を設定（時間・分）</span>
 
               <div className={styles.timeInputsRow}>
                 {/* 時間（時） */}
@@ -709,7 +714,7 @@ export function BoardCreateForm({ initialNow, inviteCandidates = [], invitationE
             {/* 設定中の日時サマリー */}
             <div className={styles.dateTimeSummary}>
               <span className={styles.dateTimeSummaryText}>
-                🗓️ 開始日時：{selectedDate} {formattedHour}:{formattedMinute}
+                <CalendarIcon /> 開始日時：{selectedDate} {formattedHour}:{formattedMinute}
               </span>
               <span className={styles.dateTimeRangeNotice}>
                 掲示板が始まる日時です。過去の日時は選べません。

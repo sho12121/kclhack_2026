@@ -3,7 +3,7 @@ import { BellIcon, CameraProjectorWatermark, ChatIcon, HomeIcon, SettingsIcon, U
 import styles from "./site-layout.module.css";
 
 type SiteSidebarProps = {
-  active: "boards" | "account" | "notifications";
+  active?: "boards" | "create" | "account" | "notifications";
   onEditProfile?: () => void;
 };
 
@@ -11,18 +11,19 @@ export function SiteSidebar({ active, onEditProfile }: SiteSidebarProps) {
   return (
     <aside className={styles.sidebar} aria-label="サイドナビゲーション">
       <nav className={styles.navGroup}>
-        <Link href="/" className={`${styles.navLink} ${active === "boards" ? styles.active : ""}`}
+        <Link prefetch={true} href="/" className={`${styles.navLink} ${active === "boards" ? styles.active : ""}`}
           aria-current={active === "boards" ? "page" : undefined}>
           <HomeIcon /><span>掲示板一覧</span>
         </Link>
-        <Link href="/?create=1" className={styles.navLink}>
+        <Link prefetch={true} href="/?create=1" className={`${styles.navLink} ${active === "create" ? styles.active : ""}`}
+          aria-current={active === "create" ? "page" : undefined}>
           <ChatIcon /><span>掲示板を作成</span>
         </Link>
-        <Link href="/account" className={`${styles.navLink} ${active === "account" ? styles.active : ""}`}
+        <Link prefetch={true} href="/account" className={`${styles.navLink} ${active === "account" ? styles.active : ""}`}
           aria-current={active === "account" ? "page" : undefined}>
           <UserIcon /><span>マイページ</span>
         </Link>
-        <Link href="/notifications" className={`${styles.navLink} ${active === "notifications" ? styles.active : ""}`}
+        <Link prefetch={true} href="/notifications" className={`${styles.navLink} ${active === "notifications" ? styles.active : ""}`}
           aria-current={active === "notifications" ? "page" : undefined}>
           <BellIcon /><span>通知</span>
         </Link>

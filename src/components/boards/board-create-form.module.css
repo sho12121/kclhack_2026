@@ -593,6 +593,8 @@
 
 /* ドロップダウンメニュー */
 .comboDropdown {
+  touch-action: pan-y;
+  overscroll-behavior: contain;
   position: absolute;
   top: calc(100% + 4px);
   left: 0;

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
-import { BoardCreateForm } from "@/components/boards/board-create-form";
+import { Suspense } from "react";
+import dynamic from "next/dynamic";
+import Loading from "./loading";
 import { BoardList } from "@/components/boards/board-list";
 import { listBoards } from "@/lib/boards";
 import { DatabaseError } from "@/lib/database-error";
@@ -13,6 +15,8 @@ import { SiteSidebar } from "@/components/layout/site-sidebar";
 import { ChatIcon, FilmIcon } from "@/components/ui/icons";
 import styles from "@/components/boards/boards.module.css";
 import layout from "@/components/layout/site-layout.module.css";
+
+const BoardCreateForm = dynamic(() => import("@/components/boards/board-create-form").then(module => module.BoardCreateForm));
 
 type HomePageProps = {
   searchParams: Promise<{ create?: string | string[]; demo?: string | string[] }>;
@@ -27,7 +31,12 @@ async function getBoardFormInitialTime() {
 export default async function HomePage({ searchParams }: HomePageProps) {
   const { create } = await searchParams;
   const showCreateForm = create === "1";
+  return <Suspense key={showCreateForm ? "create" : "boards"} fallback={<Loading />}>
+    <HomeContent showCreateForm={showCreateForm} />
+  </Suspense>;
+}
 
+async function HomeContent({ showCreateForm }: { showCreateForm: boolean }) {
   let inviteCandidates: PublicProfile[] = [];
   let invitationError = "";
   let canInvite = false;
@@ -49,22 +58,22 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const initialNow = await getBoardFormInitialTime();
   let boards: BoardSummary[] = [];
   let loadError = "";
-  try { boards = await listBoards(); }
+  try { if (!showCreateForm) boards = await listBoards(); }
   catch (error) { loadError = error instanceof DatabaseError ? error.message : "掲示板一覧を取得できませんでした。時間をおいて再読み込みしてください。"; }
 
   return (
     <div className={layout.layout}>
-      <SiteSidebar active="boards" />
+      <SiteSidebar active={showCreateForm ? "create" : "boards"} />
       <div className={layout.content}>
         <section className={styles.intro} aria-labelledby="page-title">
           <div className={styles.introIcon} aria-hidden="true"><FilmIcon /></div>
-          <h1 id="page-title">開催中・予定の掲示板一覧</h1>
-          <p className={styles.introDescription}>同じ映画を観て、感想を語ろう。</p>
+          <h1 id="page-title">{showCreateForm ? "掲示板を作成" : "開催中・予定の掲示板一覧"}</h1>
+          <p className={styles.introDescription}>{showCreateForm ? "映画・定員・開始日時を設定します。" : "同じ映画を観て、感想を語ろう。"}</p>
           {!showCreateForm && <Link className={styles.primary} href="/?create=1"><ChatIcon />掲示板を作成する</Link>}
         </section>
         {showCreateForm && <BoardCreateForm initialNow={initialNow} inviteCandidates={inviteCandidates} invitationError={invitationError} canInvite={canInvite} />}
-        {loadError ? <div className={styles.panel} role="alert"><p>{loadError}</p><Link href="/">再読み込み</Link></div>
-          : <BoardList boards={boards} initialNow={initialNow} />}
+        {!showCreateForm && (loadError ? <div className={styles.panel} role="alert"><p>{loadError}</p><Link href="/">再読み込み</Link></div>
+          : <BoardList boards={boards} initialNow={initialNow} />)}
       </div>
       <aside className={styles.guideSidebar} aria-label="ハナシネマの使い方">
         <section className={styles.guideCard}>

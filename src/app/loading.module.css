@@ -1,0 +1,6 @@
+.label { margin: 4px 0 18px; color: #475569; font-size: 14px; }
+.card { margin-bottom: 18px; padding: 28px; border: 1px solid #e2e8f0; border-radius: 16px; background: white; }
+.heading, .line, .shortLine { border-radius: 6px; background: #e2e8f0; }
+.heading { width: 45%; height: 24px; margin-bottom: 24px; }
+.line { width: 100%; height: 14px; margin: 14px 0; }
+.shortLine { width: 65%; height: 14px; margin: 14px 0; }

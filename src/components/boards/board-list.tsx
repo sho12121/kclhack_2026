@@ -3,7 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import type { BoardSummary } from "@/types/board";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { formatBoardDate } from "@/lib/board-draft";
 import { CalendarIcon, ChatIcon, FilmIcon, UsersIcon } from "@/components/ui/icons";
 import styles from "./boards.module.css";
@@ -14,7 +14,6 @@ export function BoardList({ boards, isSample = false, initialNow }: {
   isSample?: boolean;
   initialNow: number;
 }) {
-  const router = useRouter();
   const [now, setNow] = useState(initialNow);
   const [noticeBoardId, setNoticeBoardId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -129,14 +128,12 @@ export function BoardList({ boards, isSample = false, initialNow }: {
                       : isFull ? <strong className={styles.unlimitedAvailability}>満員</strong>
                       : <>あと<strong>{remaining}<span>人</span></strong><span>参加できます</span></>}
                   </p>
-                  <button type="button" className={styles.primary} disabled={isFull && !isMember}
-                    aria-label={`${board.title}：${buttonLabel}`}
-                    onClick={() => {
-                      if (isSample) { setNoticeBoardId(board.id); return; }
-                      router.push(`/boards/${board.id}`);
-                    }}>
+                  {isSample || (isFull && !isMember) ? <button type="button" className={styles.primary} disabled={isFull && !isMember}
+                    aria-label={`${board.title}：${buttonLabel}`} onClick={() => setNoticeBoardId(board.id)}>
                     <ChatIcon />{buttonLabel}
-                  </button>
+                  </button> : <Link href={`/boards/${board.id}`} className={styles.primary} aria-label={`${board.title}：${buttonLabel}`}>
+                    <ChatIcon />{buttonLabel}
+                  </Link>}
                 </div>
                 {noticeBoardId === board.id && <p className={styles.joinNotice} role="status">
                   {isSample ? "サンプルのため参加申し込み・参加は行われません。" : "参加機能は準備中です。申し込みは行われていません。"}

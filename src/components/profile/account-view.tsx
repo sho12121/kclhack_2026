@@ -3,7 +3,7 @@
 import React, { useState, useTransition } from "react";
 import Link from "next/link";
 import styles from "./account.module.css";
-import { UserProfile, ActivityItem } from "@/types/profile";
+import { UserProfile } from "@/types/profile";
 import { SiteSidebar } from "@/components/layout/site-sidebar";
 import { updateProfile } from "@/app/account/actions";
 import type { BoardSummary } from "@/types/board";
@@ -19,16 +19,8 @@ import {
   TagIcon,
   GenderIcon,
 } from "./icons";
-import {
-  DefaultAvatar,
-  KimiNoNaWaPoster,
-  InceptionPoster,
-  SpiritedAwayPoster,
-  LaLaLandPoster,
-  BatmanPoster,
-} from "./artworks";
+import { DefaultAvatar } from "./artworks";
 
-const recentActivities: ActivityItem[] = [];
 
 export type AccountViewProps = {
   initialProfile: UserProfile;
@@ -87,24 +79,6 @@ export function AccountView({ initialProfile, favoriteBoards = [], favoritesErro
         } else setProfileError(res.error || "プロフィールを保存できませんでした。");
       } catch { setProfileError("通信に失敗しました。入力内容はそのままで、もう一度保存をお試しください。"); }
     });
-  };
-
-  // ポスターのレンダリングヘルパー
-  const renderPoster = (type: string, className: string) => {
-    switch (type) {
-      case "kiminonawa":
-        return <KimiNoNaWaPoster className={className} />;
-      case "inception":
-        return <InceptionPoster className={className} />;
-      case "chihiro":
-        return <SpiritedAwayPoster className={className} />;
-      case "lalaland":
-        return <LaLaLandPoster className={className} />;
-      case "batman":
-        return <BatmanPoster className={className} />;
-      default:
-        return <div className={className} style={{ backgroundColor: "#cbd5e1" }} />;
-    }
   };
 
   return (
@@ -242,23 +216,7 @@ export function AccountView({ initialProfile, favoriteBoards = [], favoritesErro
           <div className={styles.sidebarCard}>
             <h2 className={styles.sidebarCardTitle}>最近のアクティビティ</h2>
             <p>作成した掲示板は「作成した掲示板」タブで確認できます。</p>
-            <div className={styles.activityList}>
-              {recentActivities.map((act) => (
-                <div key={act.id} className={styles.activityItem}>
-                  <div className={styles.activityAvatar}>
-                    {act.iconBg === "avatar" ? (
-                      <DefaultAvatar />
-                    ) : (
-                      renderPoster(act.iconBg, styles.activityAvatar)
-                    )}
-                  </div>
-                  <div className={styles.activityContent}>
-                    <p className={styles.activityText}>{act.title}</p>
-                    <span className={styles.activityTime}>{act.timeAgo}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+
           </div>
         </aside>
       </div>

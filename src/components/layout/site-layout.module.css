@@ -61,3 +61,5 @@
 
 .guestBadge { padding: 4px 8px; border-radius: 6px; background: #f1f5f9; color: #334155; font-size: 12px; white-space: nowrap; }
 @media (max-width: 640px) { .headerNav { flex-wrap: wrap; gap: 8px; max-width: 100%; } }
+
+.authPending { display: inline-flex; align-items: center; justify-content: center; min-width: 80px; min-height: 36px; color: #475569; font-size: 12px; }
