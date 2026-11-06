@@ -17,6 +17,10 @@
 .search label { display: grid; gap: 8px; flex: 1; min-width: 180px; }
 .search input { padding: 12px; border: 1px solid #64748b; border-radius: 8px; width: 100%; }
 .unread { border-left: 5px solid #2563eb; background: #f8fbff; }
-.notificationLink { display: inline-flex; align-items: center; gap: 6px; color: #1d4ed8; font-weight: 600; white-space: nowrap; }
-.badge { background: #b91c1c; color: white; border-radius: 99px; min-width: 20px; padding: 2px 6px; font-size: 12px; text-align: center; }
+.notificationLink { position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; color: #1d4ed8; background: #eff6ff; text-decoration: none; }
+.notificationLink:hover { background: #dbeafe; }
+.notificationLink:focus-visible { outline: 3px solid #1d4ed8; outline-offset: 3px; }
+.notificationLink > span:first-child { display: flex; }
+.notificationLink svg { width: 24px; height: 24px; }
+.badge { position: absolute; top: -3px; right: -5px; background: #b91c1c; color: white; border-radius: 99px; min-width: 20px; padding: 2px 6px; font-size: 12px; text-align: center; }
 @media(max-width:600px) { .card { padding: 18px; } }

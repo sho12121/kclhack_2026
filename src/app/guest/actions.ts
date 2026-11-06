@@ -15,11 +15,12 @@ export async function startGuest(form: FormData) {
   }
   const supabase = await createClient();
   const { data: existing, error: claimsError } = await supabase.auth.getClaims();
-  // 通常アカウントや既存のゲストを、新しい匿名ユーザーで上書きしない。
-  if (!claimsError && existing?.claims.sub) redirect(next);
+  // QRでは通常アカウントからゲストへ切り替える。手動入口と既存ゲストは再利用する。
+  if (!claimsError && existing?.claims.sub && (entry !== "/guest/qr" || existing.claims.is_anonymous === true)) redirect(next);
 
   let failure: string | null = null;
   try {
+    // 先にsignOutしない。ゲスト発行に失敗した場合は元のログインを維持する。
     const { data, error } = await supabase.auth.signInAnonymously({
       options: { data: { display_name: "ゲスト" } },
     });

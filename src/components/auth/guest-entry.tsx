@@ -18,7 +18,8 @@ export async function GuestEntry({ next, autoStart = false, errorCode }: {
   const configured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
   if (configured) {
     const { data, error } = await getAuth();
-    if (!error && data?.claims.sub) redirect(next);
+    // QR入口では通常アカウントからゲストへ切り替える。既存ゲストは再利用する。
+    if (!error && data?.claims.sub && (!autoStart || data.claims.is_anonymous === true)) redirect(next);
   }
   const failure = errorCode ?? (configured ? undefined : "configuration");
   const automatic = autoStart && !failure;

@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { BellIcon } from "@/components/ui/icons";
 import { useEffect, useState } from "react";
 import styles from "./social.module.css";
 export function NotificationLink({ userId }: { userId: string }) {
@@ -17,5 +18,5 @@ export function NotificationLink({ userId }: { userId: string }) {
     window.addEventListener("notifications-read", update); document.addEventListener("visibilitychange", update);
     return () => {controller.abort();window.clearInterval(timer);window.removeEventListener("notifications-read",update);document.removeEventListener("visibilitychange",update);};
   }, [userId]);
-  return <Link className={styles.notificationLink} href="/notifications" aria-label={count ? `通知、未読${count}件` : "通知"}>通知{count > 0 && <span className={styles.badge} aria-hidden="true">{count > 99 ? "99+" : count}</span>}</Link>;
+  return <Link className={styles.notificationLink} href="/notifications" title="通知" aria-label={count ? `通知、未読${count}件` : "通知"}><span aria-hidden="true"><BellIcon /></span>{count > 0 && <span className={styles.badge} aria-hidden="true">{count > 99 ? "99+" : count}</span>}</Link>;
 }

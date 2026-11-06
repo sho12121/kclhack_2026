@@ -13,7 +13,7 @@ export default async function UserPage({params,searchParams}:{params:Promise<{id
   let profile, people; try { [profile,people] = await Promise.all([getPublicProfile(id),relation ? findProfiles("",id,relation) : Promise.resolve([])]); }
   catch (error) { return <section className={styles.page}><h1>プロフィール</h1><p role="alert">{error instanceof DatabaseError ? error.message : "プロフィールを取得できませんでした。"}</p><Link href={`/users/${id}`}>再読み込み</Link></section>; }
   if (!profile) notFound();
-  return <section className={styles.page}><Link href="/users">← ユーザーを探す</Link>
+  return <section className={styles.page}><Link href="/">← 掲示板一覧へ</Link>
     <div className={styles.card}><div className={styles.row}><h1>{profile.nickname}</h1>{id === auth.data.claims.sub ? <Link href="/account">自分のプロフィールを編集</Link> : <FollowButton userId={id} isFollowing={profile.isFollowing} isGuest={auth.data.claims.is_anonymous === true}/>}</div>
       <p className={styles.bio}>{profile.bio || "自己紹介はまだありません。"}</p>
       {profile.favoriteGenres && <p>好きなジャンル：{profile.favoriteGenres}</p>}{profile.motto && <p>{profile.motto}</p>}
