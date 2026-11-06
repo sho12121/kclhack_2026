@@ -48,3 +48,5 @@
   .meta time { width: 100%; margin-left: 0; }
   .description { font-size: 14px; }
 }
+
+.replyPreview { margin: 12px 0; padding: 12px 14px; border-left: 3px solid #93c5fd; border-radius: 6px; background: #eff6ff; color: #334155; font-size: 14px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }

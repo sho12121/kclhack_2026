@@ -23,3 +23,9 @@ test("返信: 返信先IDを精度を落とさず受け取り、不正な参照�
   assert.throws(()=>parseMessageSnapshot({messages:[{...reply,replyToId:123}],deletedIds:[]}));
   assert.throws(()=>parseMessageSnapshot({messages:[{...reply,replyToAuthorName:{}}],deletedIds:[]}));
 });
+
+test("返信引用: 本文を受け取り、不正な型を拒否する", () => {
+ const reply={...message,replyToId:"1",replyToAuthorName:"相手",replyToContent:"引用元の文章"};
+ assert.equal(parseMessageSnapshot({messages:[reply],deletedIds:[]}).messages[0].replyToContent,"引用元の文章");
+ assert.throws(()=>parseMessageSnapshot({messages:[{...reply,replyToContent:123}],deletedIds:[]}));
+});

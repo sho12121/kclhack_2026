@@ -53,8 +53,9 @@
   .authButton { padding: 7px 12px; }
   .layout { flex-direction: column; }
   .sidebar { width: 100%; padding: 8px 12px; border-bottom: 1px solid #e2e8f0; }
-  .navGroup { flex-direction: row; gap: 4px; overflow-x: auto; }
-  .navLink { padding: 9px 12px; gap: 7px; flex-shrink: 0; font-size: 12px; }
+  .navGroup { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+  .navLink { padding: 9px 2px; gap: 4px; min-width: 0; flex-direction: column; font-size: 10px; white-space: nowrap; }
+  .navGroup > button { grid-column: 1 / -1; flex-direction: row; }
   .navLink span { display: inline; }
   .content { padding: 20px 12px; max-width: none; }
 }
@@ -63,3 +64,5 @@
 @media (max-width: 640px) { .headerNav { flex-wrap: wrap; gap: 8px; max-width: 100%; } }
 
 .authPending { display: inline-flex; align-items: center; justify-content: center; min-width: 80px; min-height: 36px; color: #475569; font-size: 12px; }
+
+.notificationLabel { position: relative; margin-right: 12px; }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FavoriteButton } from "./favorite-button";
 import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import { joinBoard, postMessage, deleteComment, deleteBoard } from "@/app/boards/actions";
+import { parseMessageSnapshot } from "@/lib/board-messages";
 import { formatBoardDate } from "@/lib/board-draft";
 import type { BoardMessage, StoredBoard } from "@/types/board";
 import styles from "./board-room.module.css";
@@ -13,9 +14,13 @@ function mergeMessages(current: BoardMessage[], incoming: BoardMessage[]) {
     .sort((a, b) => BigInt(a.id) < BigInt(b.id) ? -1 : BigInt(a.id) > BigInt(b.id) ? 1 : 0);
 }
 
-export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, initialNow }: {
-  board: StoredBoard; viewerId: string; viewerIsGuest: boolean; initialMessages: BoardMessage[]; initialNow: number;
+export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, initialNow, initialTargetId = null }: {
+  board: StoredBoard; viewerId: string; viewerIsGuest: boolean; initialMessages: BoardMessage[]; initialNow: number; initialTargetId?: string | null;
 }) {
+  const [highlightedId, setHighlightedId] = useState<string | null>(initialTargetId);
+  const [historyView, setHistoryView] = useState(Boolean(initialTargetId));
+  const [jumping, setJumping] = useState(false);
+  const pendingJump = useRef<string | null>(initialTargetId);
   const [now, setNow] = useState(initialNow);
   const [messages, setMessages] = useState(initialMessages);
   const [content, setContent] = useState("");
@@ -31,7 +36,7 @@ export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, ini
   const messagesRef = useRef(initialMessages);
   const activeRequest = useRef<AbortController | null>(null);
   const logRef = useRef<HTMLDivElement | null>(null);
-  const stayAtBottom = useRef(true);
+  const stayAtBottom = useRef(!initialTargetId);
   const isStarted = Date.parse(board.startsAt) <= now;
   const isFull = board.capacity !== null && board.participantCount >= board.capacity;
   const guestBlocked = viewerIsGuest && !board.allowGuests;
@@ -53,7 +58,11 @@ export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, ini
         latestId.current = incoming.at(-1)!.id;
       }
       const deleted = new Set<string>(Array.isArray(data.deletedIds) ? data.deletedIds : []);
-      setMessages(current => mergeMessages(current, incoming).map(message => deleted.has(message.id) ? {...message,content:"削除されたコメントです。",deletedAt:message.deletedAt ?? "deleted"} : message));
+      setMessages(current => mergeMessages(current, incoming).map(message => ({
+        ...message,
+        ...(deleted.has(message.id) ? {content:"削除されたコメントです。",deletedAt:message.deletedAt ?? "deleted"} : {}),
+        ...(message.replyToId && deleted.has(message.replyToId) ? {replyToContent:"削除されたコメントです。"} : {}),
+      })));
       setPollError(null);
     } catch (error) {
       if (!controller.signal.aborted) setPollError(error instanceof Error ? error.message : "会話を更新できませんでした。");
@@ -69,6 +78,10 @@ export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, ini
   }, [refreshMessages]);
   useEffect(() => {
     messagesRef.current = messages;
+    const target = pendingJump.current && document.getElementById(`message-${pendingJump.current}`);
+    if (target) {
+      target.scrollIntoView({ block: "center" }); target.focus({ preventScroll: true }); pendingJump.current = null;
+    }
     if (logRef.current && stayAtBottom.current) logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [messages]);
 
@@ -80,7 +93,11 @@ export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, ini
     setError(null); startTransition(async () => {
       try {
         const result = await deleteComment(id); if (result.error) { setError(result.error); return; }
-        setMessages(current => current.map(message => message.id === id ? {...message,content:"削除されたコメントです。",deletedAt:new Date().toISOString()} : message));
+        setMessages(current => current.map(message => ({...message,
+          ...(message.id === id ? {content:"削除されたコメントです。",deletedAt:new Date().toISOString()} : {}),
+          ...(message.replyToId === id ? {replyToContent:"削除されたコメントです。"} : {}),
+        })));
+        if (replyTarget?.id === id) setReplyTarget(null);
       } catch { setError("コメントを削除できませんでした。"); }
     });
   }
@@ -101,9 +118,37 @@ export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, ini
     finally { setLoadingOlder(false); }
   }
 
+  async function navigateMessages(targetId?: string) {
+    const existing = targetId ? document.getElementById(`message-${targetId}`) : null;
+    if (existing) {
+      stayAtBottom.current = false; setHighlightedId(targetId!);
+      existing.scrollIntoView({ block: "center" }); existing.focus({ preventScroll: true }); return;
+    }
+    if (jumping || pending || loadingOlder) return;
+    activeRequest.current?.abort();
+    const controller = new AbortController(); activeRequest.current = controller;
+    setJumping(true); setError(null);
+    try {
+      const response = await fetch(`/api/boards/${board.id}/messages${targetId ? `?target=${targetId}` : ""}`, { cache: "no-store", signal: controller.signal });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "コメントを取得できませんでした。");
+      if (controller.signal.aborted) return;
+      const snapshot = parseMessageSnapshot(data);
+      pendingJump.current = targetId ?? null; stayAtBottom.current = !targetId;
+      latestId.current = snapshot.messages.at(-1)?.id ?? "0";
+      setHistoryView(Boolean(targetId)); setHighlightedId(targetId ?? null);
+      setHasOlder(snapshot.messages.length === 50); setMessages(snapshot.messages);
+    } catch (error) {
+      if (!controller.signal.aborted) setError(error instanceof Error ? error.message : "コメントを取得できませんでした。");
+    } finally {
+      if (activeRequest.current === controller) activeRequest.current = null;
+      setJumping(false);
+    }
+  }
+
   function handlePost(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (pending || !content.trim() || !isStarted) return;
+    if (pending || jumping || !content.trim() || !isStarted) return;
     setError(null);
     startTransition(async () => {
       try {
@@ -113,7 +158,7 @@ export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, ini
         setReplyTarget(null);
         stayAtBottom.current = true;
         const savedMessage = result.message;
-        if (savedMessage) setMessages(current => mergeMessages(current, [{...savedMessage, replyToAuthorName: replyTarget?.authorName ?? null}]));
+        if (savedMessage) setMessages(current => mergeMessages(current, [{...savedMessage, replyToAuthorName: replyTarget?.authorName ?? null, replyToContent: replyTarget?.content.slice(0,240) ?? null}]));
         // 投稿成功後の追加取得を、入力欄を使えるように戻す条件にしない。
         void refreshMessages();
       } catch { setError("投稿できませんでした。通信環境を確認して再度お試しください。"); }
@@ -156,15 +201,21 @@ export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, ini
       {error && <p role="alert" className={styles.error}>{error}</p>}
     </section> : <section className={styles.panel} aria-labelledby="conversation-title">
       <h2 id="conversation-title">参加者の会話</h2>
-      {hasOlder && <button type="button" className={styles.secondary} disabled={loadingOlder} onClick={() => void loadOlder()}>{loadingOlder ? "読み込み中…" : "以前の会話を読み込む"}</button>}
+      {historyView && <button type="button" className={styles.secondary} disabled={jumping || pending || loadingOlder} onClick={() => void navigateMessages()}>最新の会話に戻る</button>}
+      {jumping && <p role="status">コメントへ移動しています…</p>}
+      {hasOlder && <button type="button" className={styles.secondary} disabled={loadingOlder || jumping} onClick={() => void loadOlder()}>{loadingOlder ? "読み込み中…" : "以前の会話を読み込む"}</button>}
       <div className={styles.messages} role="log" aria-label="会話の履歴" aria-live="polite" ref={logRef}
         onScroll={() => { const node = logRef.current; if (node) stayAtBottom.current = node.scrollHeight - node.scrollTop - node.clientHeight < 80; }}>
         {messages.length === 0 && <p className={styles.empty}>まだ会話はありません。{isStarted ? "最初の感想を投稿してみましょう。" : "開始日時になったら会話を始めましょう。"}</p>}
-        {messages.map(message => <article key={message.id} className={`${styles.message} ${message.authorId === viewerId ? styles.own : ""}`}>
+        {messages.map(message => <article id={`message-${message.id}`} tabIndex={-1} key={message.id} className={`${styles.message} ${message.authorId === viewerId ? styles.own : ""} ${highlightedId === message.id ? styles.highlighted : ""}`}>
           <div className={styles.messageMeta}><strong>{message.authorIsGuest === false ? <Link href={`/users/${message.authorId}`}>{message.authorName}</Link> : message.authorName}</strong><time dateTime={message.createdAt}>{formatBoardDate(message.createdAt)}</time></div>
-          {message.replyToId && <p className={styles.replyReference}>↳ {message.replyToAuthorName || "ユーザー"}さんのコメント #{message.replyToId} への返信</p>}
+          {message.replyToId && !message.deletedAt && <button type="button" className={styles.replyReference} disabled={jumping || pending || loadingOlder}
+            onClick={() => void navigateMessages(message.replyToId!)} aria-label="返信元のコメントを表示">
+            <span className={styles.quoteAuthor}>↳ {message.replyToAuthorName || "ユーザー"}さんへの返信</span>
+            <span className={styles.quoteContent}>{message.replyToContent || `コメント #${message.replyToId}`}</span>
+          </button>}
           <p>{message.content}</p>
-          {!message.deletedAt && isStarted && <button type="button" className={styles.replyButton} disabled={pending} onClick={() => {
+          {!message.deletedAt && isStarted && <button type="button" className={styles.replyButton} disabled={pending || jumping} onClick={() => {
             setReplyTarget(message); inputRef.current?.focus(); inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
           }} aria-label={`${message.authorName}さんのコメントに返信`}>返信する</button>}
           {(message.authorId === viewerId || board.isOwner) && !message.deletedAt && <button type="button" className={styles.deleteComment} disabled={pending} onClick={()=>removeComment(message.id, message.authorId !== viewerId)}>{message.authorId === viewerId ? "自分のコメントを削除" : "管理者としてコメントを削除"}</button>}
@@ -178,9 +229,9 @@ export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, ini
           <button type="button" className={styles.secondary} disabled={pending} onClick={() => setReplyTarget(null)}>返信をやめる</button>
         </div>}
         <label htmlFor="message-content">感想・メッセージ</label>
-        <textarea ref={inputRef} id="message-content" value={content} maxLength={2000} rows={4} required disabled={pending || !isStarted}
+        <textarea ref={inputRef} id="message-content" value={content} maxLength={2000} rows={4} required disabled={pending || jumping || !isStarted}
           onChange={event => setContent(event.target.value)} placeholder="映画の感想を入力してください" />
-        <div className={styles.formFooter}><span>{content.length} / 2000文字</span><button type="submit" disabled={pending || !isStarted || !content.trim()}>{pending ? "投稿しています…" : replyTarget ? "返信する" : "投稿する"}</button></div>
+        <div className={styles.formFooter}><span>{content.length} / 2000文字</span><button type="submit" disabled={pending || jumping || !isStarted || !content.trim()}>{pending ? "投稿しています…" : replyTarget ? "返信する" : "投稿する"}</button></div>
       </form>
       {error && <p role="alert" className={styles.error}>{error}</p>}
     </section>}

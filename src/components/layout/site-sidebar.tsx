@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NotificationCount } from "@/components/social/notification-count";
 import { BellIcon, CameraProjectorWatermark, ChatIcon, HomeIcon, SettingsIcon, UserIcon } from "@/components/ui/icons";
 import styles from "./site-layout.module.css";
 
@@ -25,7 +26,7 @@ export function SiteSidebar({ active, onEditProfile }: SiteSidebarProps) {
         </Link>
         <Link prefetch={true} href="/notifications" className={`${styles.navLink} ${active === "notifications" ? styles.active : ""}`}
           aria-current={active === "notifications" ? "page" : undefined}>
-          <BellIcon /><span>通知</span>
+          <BellIcon /><span className={styles.notificationLabel}>通知<NotificationCount /></span>
         </Link>
         {onEditProfile && (
           <button type="button" className={styles.navLink} onClick={onEditProfile}>

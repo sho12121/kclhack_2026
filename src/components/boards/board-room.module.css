@@ -34,3 +34,11 @@
 .replyComposer p { max-height: 80px; overflow: auto; margin: 6px 0 0; overflow-wrap: anywhere; white-space: pre-wrap; }
 .replyComposer button { flex-shrink: 0; }
 @media(max-width: 480px) { .replyComposer { flex-direction: column; } }
+
+.room .replyButton { min-height: 28px; margin: 6px 10px 0 0; padding: 3px 6px; border: 0; border-radius: 4px; color: #475569; background: transparent; font-size: 12px; font-weight: 500; }
+.room .replyButton:hover { color: #1d4ed8; background: #dbeafe; }
+.room .replyReference { display: block; width: 100%; margin: 10px 0 8px; padding: 8px 10px; border: 0; border-left: 3px solid #93c5fd; border-radius: 4px; background: #f8fafc; color: #475569; text-align: left; font-size: 12px; font-weight: 400; line-height: 1.6; }
+.room .replyReference:hover { background: #dbeafe; }
+.quoteAuthor { display: block; font-size: 11px; font-weight: 600; margin-bottom: 2px; }
+.quoteContent { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; white-space: pre-wrap; overflow-wrap: anywhere; }
+.highlighted { outline: 2px solid #2563eb; outline-offset: 2px; }

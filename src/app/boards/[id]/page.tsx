@@ -2,25 +2,31 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 import { getAuth } from "@/lib/supabase/server";
-import { isUuid, listBoards, getMessageSnapshot } from "@/lib/boards";
+import { isUuid, listBoards, getMessageSnapshot, getMessageContext } from "@/lib/boards";
+import { isDatabaseId } from "@/lib/board-messages";
 import { DatabaseError } from "@/lib/database-error";
 import { BoardRoom } from "@/components/boards/board-room";
 import type { StoredBoard, BoardMessage } from "@/types/board";
 
 async function requestTime() { await connection(); return Date.now(); }
 
-export default async function BoardPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function BoardPage({ params, searchParams }: {
+  params: Promise<{ id: string }>; searchParams: Promise<{ message?: string | string[] }>;
+}) {
   const { id } = await params;
   if (!isUuid(id)) notFound();
+  const requested = (await searchParams).message;
+  const target = isDatabaseId(requested) ? requested : null;
+  const next = `/boards/${id}${target ? `?message=${target}` : ""}`;
   const { data, error } = await getAuth();
-  if (error || !data?.claims.sub) redirect(`/login?${new URLSearchParams({ next: `/boards/${id}` })}`);
+  if (error || !data?.claims.sub) redirect(`/login?${new URLSearchParams({ next })}`);
   let board: StoredBoard | undefined;
   let messages: BoardMessage[] = [];
   try {
     // コメントもDB側で参加権限を検証するため、募集情報と並行して取得できる。
     const [boards, snapshot] = await Promise.all([
       listBoards(id),
-      getMessageSnapshot(id).then(value => ({ value, error: null })).catch(error => ({ value: null, error })),
+      (target ? getMessageContext(id, target) : getMessageSnapshot(id)).then(value => ({ value, error: null })).catch(error => ({ value: null, error })),
     ]);
     board = boards[0];
     if (board?.isMember && !(data.claims.is_anonymous === true && !board.allowGuests)) {
@@ -32,5 +38,5 @@ export default async function BoardPage({ params }: { params: Promise<{ id: stri
   }
   if (!board) notFound();
   const initialNow = await requestTime();
-  return <BoardRoom key={`${id}-${board.isMember}`} board={board} viewerId={data.claims.sub} viewerIsGuest={data.claims.is_anonymous === true} initialMessages={messages} initialNow={initialNow} />;
+  return <BoardRoom key={`${id}-${board.isMember}-${target ?? "latest"}`} initialTargetId={target} board={board} viewerId={data.claims.sub} viewerIsGuest={data.claims.is_anonymous === true} initialMessages={messages} initialNow={initialNow} />;
 }

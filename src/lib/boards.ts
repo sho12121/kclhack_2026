@@ -51,3 +51,11 @@ export async function getMessageSnapshot(boardId: string, options: { after?: str
   if (error) throw databaseError(error);
   return parseMessageSnapshot(data);
 }
+
+export async function getMessageContext(boardId: string, messageId: string): Promise<MessageSnapshot> {
+  const { supabase, data, error: authError } = await getAuth();
+  if (authError || !data?.claims.sub) throw new DatabaseError("ログインしてください。", 401);
+  const { data: snapshot, error } = await readDatabase(() => supabase.rpc("cinema_get_message_context", { p_board_id: boardId, p_message_id: messageId }));
+  if (error) throw databaseError(error);
+  return parseMessageSnapshot(snapshot);
+}

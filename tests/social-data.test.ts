@@ -26,3 +26,14 @@ test("招待通知: 掲示板への移動先を保持し、削除済みの掲示
  assert.equal(parseInbox({unreadCount:1,items:[item]}).items[0].kind,"board_invitation");
  assert.equal(parseInbox({unreadCount:1,items:[{...item,boardId:null}]}).items[0].boardId,null);
 });
+
+test("返信通知の本文・移動先: 正しい型だけを転送する", () => {
+ const item={id:"1",kind:"comment_reply",actorId:id,actorName:"相手",boardId:id,boardTitle:"会話",messageId:"9007199254740993",messagePreview:"返信の本文",createdAt:"2026-11-06T00:00:00Z",readAt:null};
+ const parsed=parseInbox({unreadCount:1,items:[item]}).items[0];
+ assert.equal(parsed.messageId,item.messageId);assert.equal(parsed.messagePreview,"返信の本文");
+ assert.throws(()=>parseInbox({unreadCount:1,items:[{...item,messageId:123}]}));
+ assert.throws(()=>parseInbox({unreadCount:1,items:[{...item,messagePreview:{}}]}));
+ assert.equal(safeAuthRedirect(`/boards/${id}?message=9007199254740993`),`/boards/${id}?message=9007199254740993`);
+ assert.equal(safeAuthRedirect(`/boards/${id}?message=9223372036854775808`),"/account");
+ assert.equal(safeAuthRedirect(`/boards/${id}?message=1&next=https://evil.invalid`),"/account");
+});
