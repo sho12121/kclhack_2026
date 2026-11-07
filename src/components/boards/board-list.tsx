@@ -12,6 +12,8 @@ import { CalendarIcon, ChatIcon, FilmIcon, UsersIcon } from "@/components/ui/ico
 import styles from "./boards.module.css";
 import { FavoriteButton } from "./favorite-button";
 
+const normalizeMovieTitle = (value: string) => value.normalize("NFKC").toLowerCase().replace(/\s+/g, "");
+
 export function BoardList({ boards: initialBoards, isSample = false, initialNow }: {
   boards: BoardSummary[];
   isSample?: boolean;
@@ -24,25 +26,29 @@ export function BoardList({ boards: initialBoards, isSample = false, initialNow 
   const [noticeBoardId, setNoticeBoardId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [genreFilter, setGenreFilter] = useState("");
+  const [movieQuery, setMovieQuery] = useState("");
   const [sortOrder, setSortOrder] = useState("newest");
   const id = useId();
   const genres = [...new Set(boards.flatMap(board => board.movie.genres ?? []))].sort((a, b) => a.localeCompare(b, "ja"));
+  const normalizedQuery = normalizeMovieTitle(movieQuery);
   const visibleBoards = boards.filter(board => {
     const isStarted = Date.parse(board.startsAt) <= now;
     const matchesStatus = statusFilter === "all" || (statusFilter === "live" ? isStarted : !isStarted);
-    return matchesStatus && (!genreFilter || board.movie.genres?.includes(genreFilter));
+    return matchesStatus && (!genreFilter || board.movie.genres?.includes(genreFilter))
+      && normalizeMovieTitle(board.movie.title).includes(normalizedQuery);
   }).sort((a, b) => {
     const aStarted = Date.parse(a.startsAt) <= now;
     const bStarted = Date.parse(b.startsAt) <= now;
     if (aStarted !== bStarted) return aStarted ? -1 : 1;
     const difference = Date.parse(a.createdAt) - Date.parse(b.createdAt);
-      return (sortOrder === "newest" ? -difference : difference) || a.id.localeCompare(b.id);
+    return (sortOrder === "newest" ? -difference : difference) || a.id.localeCompare(b.id);
   });
-  const hasFilters = statusFilter !== "all" || genreFilter !== "";
+  const hasFilters = statusFilter !== "all" || genreFilter !== "" || normalizedQuery !== "";
 
   function resetFilters() {
     setStatusFilter("all");
     setGenreFilter("");
+    setMovieQuery("");
     setSortOrder("newest");
   }
   useEffect(() => {
@@ -83,6 +89,13 @@ export function BoardList({ boards: initialBoards, isSample = false, initialNow 
       </div>
       {refreshError && <p className={styles.refreshError} role="status">{refreshError}</p>}
       <div className={styles.boardFilters} role="group" aria-label="掲示板の絞り込みと並び替え">
+        <div className={styles.movieQuery}>
+          <label htmlFor={`${id}-movie-query`}>映画名で検索</label>
+          <input id={`${id}-movie-query`} type="search" value={movieQuery} maxLength={100}
+            placeholder="映画名の一部を入力（例：君の名は）" aria-describedby={`${id}-movie-query-help`}
+            onChange={event => setMovieQuery(event.target.value)} />
+          <small id={`${id}-movie-query-help`}>掲示板がある映画から探します。</small>
+        </div>
         <div>
           <label htmlFor={`${id}-genre`}>映画のジャンル</label>
           <select id={`${id}-genre`} value={genreFilter} onChange={event => setGenreFilter(event.target.value)}>
@@ -116,7 +129,7 @@ export function BoardList({ boards: initialBoards, isSample = false, initialNow 
       ) : visibleBoards.length === 0 ? (
         <div className={styles.empty}>
           <h3>条件に合う掲示板がありません</h3>
-          <p>ジャンルや開催状況を変更してみてください。</p>
+          <p>映画名・ジャンル・開催状況を変更してみてください。</p>
           <button type="button" className={styles.secondary} onClick={resetFilters}>絞り込みを解除</button>
         </div>
       ) : (

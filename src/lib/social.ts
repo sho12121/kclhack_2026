@@ -1,4 +1,5 @@
 import "server-only";
+import { maskNgWords } from "./ng-word-filter";
 import { getAuth } from "@/lib/supabase/server";
 import { readDatabase } from "./database-read";
 import { DatabaseError, databaseError } from "./database-error";
@@ -26,5 +27,6 @@ export async function getNotifications(before?: string) {
   const supabase = await authenticatedClient();
   const { data, error } = await readDatabase(() => supabase.rpc("cinema_notifications", { p_before: before ?? null }));
   if (error) throw databaseError(error);
-  return parseInbox(data);
+  const inbox = parseInbox(data);
+  return {...inbox,items:inbox.items.map(item=>({...item,messagePreview:item.messagePreview == null ? item.messagePreview : (item.filterEnabled ? maskNgWords(item.messagePreview) : item.messagePreview).slice(0,240)}))};
 }

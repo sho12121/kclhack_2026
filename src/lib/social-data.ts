@@ -16,9 +16,10 @@ export function parseInbox(value: unknown): NotificationInbox {
   if (!record(value) || !Array.isArray(value.items) || !count(value.unreadCount)) throw databaseError(null);
   const items = value.items.map((item: unknown): AppNotification => {
     if (!record(item) || !isDatabaseId(item.id) || !["follow", "board_created", "board_reply", "board_deleted", "board_invitation", "comment_reply"].includes(String(item.kind)) || (item.actorId !== null && !isUuid(item.actorId)) || (item.boardId !== null && !isUuid(item.boardId)) || typeof item.actorName !== "string" || (item.boardTitle !== null && typeof item.boardTitle !== "string") || typeof item.createdAt !== "string" || (item.readAt !== null && typeof item.readAt !== "string")) throw databaseError(null);
+    if (item.filterEnabled !== undefined && typeof item.filterEnabled !== "boolean") throw databaseError(null);
     if (item.messageId != null && !isDatabaseId(item.messageId)) throw databaseError(null);
     if (item.messagePreview != null && typeof item.messagePreview !== "string") throw databaseError(null);
-    return { messageId: item.messageId as string | null | undefined, messagePreview: item.messagePreview as string | null | undefined, id: item.id, kind: item.kind as AppNotification["kind"], actorId: item.actorId, actorName: item.actorName, boardId: item.boardId, boardTitle: item.boardTitle, createdAt: item.createdAt, readAt: item.readAt };
+    return { filterEnabled: item.filterEnabled as boolean | undefined, messageId: item.messageId as string | null | undefined, messagePreview: item.messagePreview as string | null | undefined, id: item.id, kind: item.kind as AppNotification["kind"], actorId: item.actorId, actorName: item.actorName, boardId: item.boardId, boardTitle: item.boardTitle, createdAt: item.createdAt, readAt: item.readAt };
   });
   return { items, unreadCount: value.unreadCount };
 }

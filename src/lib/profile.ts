@@ -40,12 +40,13 @@ export function profileFromRow(id: string, row: Record<string, unknown> | null, 
     id, nickname: nickname === "たかし" ? "" : nickname,
     bio: isSampleBio ? "" : bio, gender: text("gender"), birthDate: text("birth_date", "birthDate"),
     location: text("location"), favoriteGenres: text("favorite_genres", "favoriteGenres"), motto: text("motto"),
-    avatarUrl: text("avatar_url", "avatarUrl") || undefined, coverUrl: text("cover_url", "coverUrl") || undefined,
+    avatarUrl: hasSavedProfile ? (typeof row?.avatar_url === "string" ? row.avatar_url : undefined) : text("avatar_url", "avatarUrl") || undefined,
+    coverUrl: hasSavedProfile ? (typeof row?.cover_url === "string" ? row.cover_url : undefined) : text("cover_url", "coverUrl") || undefined,
     followCount: 0, followerCount: 0,
   };
 }
 
 /** DBが一意に発行した連番を表示する。SQL反映前は長い代替番号を作らない。 */
-export function defaultProfileName(number?: string): string {
-  return number && /^[1-9]\d*$/.test(number) ? `ユーザー#${number}` : "ユーザー";
+export function defaultProfileName(number?: string, prefix = "ユーザー"): string {
+  return number && /^[1-9]\d*$/.test(number) ? `${prefix}#${number}` : prefix;
 }

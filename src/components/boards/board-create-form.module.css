@@ -1166,3 +1166,9 @@
 .spoilerToggle[aria-pressed="true"] { border-color: #b91c1c; background: #fff1f2; color: #b91c1c; }
 .spoilerToggle:hover { border-color: #b91c1c; }
 .spoilerToggle:disabled { opacity: .6; }
+
+.startMode { display: flex; flex-wrap: wrap; gap: 12px; padding: 16px; margin: 16px 0; border: 1px solid #cbd5e1; border-radius: 10px; }
+.startMode legend { padding: 0 6px; font-size: 13px; font-weight: 600; }
+.startMode label { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; }
+.startMode input { accent-color: #2563eb; }
+.startMode input[type="radio"] { width: 18px; height: 18px; padding: 0; margin: 0; flex-shrink: 0; }

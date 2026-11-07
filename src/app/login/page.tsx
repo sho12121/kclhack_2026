@@ -55,7 +55,8 @@ export default async function LoginPage({
         )}
       </form>
       <p><Link className="guest-account-button" href={`/signup?${new URLSearchParams({ next })}`}>アカウントを作成する</Link></p>
-      <p><Link href={`/guest?${new URLSearchParams({ next: next === "/account" ? "/?create=1" : next })}`}>登録せずゲストで利用する</Link></p>
+      <p><Link className="guest-account-button" href="/">ホームに戻る</Link></p>
+      <p><Link href={`/guest?${new URLSearchParams({ next })}`}>登録せずゲストで利用する</Link></p>
     </section>
   );
 }

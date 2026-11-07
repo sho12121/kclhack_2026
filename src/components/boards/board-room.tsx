@@ -5,10 +5,10 @@ import { SpoilerBadge } from "./spoiler-badge";
 import Link from "next/link";
 import { FavoriteButton } from "./favorite-button";
 import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent } from "react";
-import { joinBoard, postMessage, deleteComment, deleteBoard } from "@/app/boards/actions";
+import { joinBoard, postMessage, deleteComment, deleteBoard, setBoardFilter } from "@/app/boards/actions";
 import { parseMessageSnapshot } from "@/lib/board-messages";
 import { formatBoardDate } from "@/lib/board-draft";
-import type { BoardMessage, StoredBoard } from "@/types/board";
+import type { BoardMessage, StoredBoard, MessageSnapshot } from "@/types/board";
 import styles from "./board-room.module.css";
 
 function mergeMessages(current: BoardMessage[], incoming: BoardMessage[]) {
@@ -19,6 +19,8 @@ function mergeMessages(current: BoardMessage[], incoming: BoardMessage[]) {
 export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, initialNow, initialTargetId = null }: {
   board: StoredBoard; viewerId: string; viewerIsGuest: boolean; initialMessages: BoardMessage[]; initialNow: number; initialTargetId?: string | null;
 }) {
+  const [filterEnabled, setFilterEnabled] = useState(board.filterEnabled ?? false);
+  const filterVersion = useRef(board.filterVersion ?? "0");
   const [highlightedId, setHighlightedId] = useState<string | null>(initialTargetId);
   const [historyView, setHistoryView] = useState(Boolean(initialTargetId));
   const [jumping, setJumping] = useState(false);
@@ -43,6 +45,16 @@ export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, ini
   const isFull = board.capacity !== null && board.participantCount >= board.capacity;
   const guestBlocked = viewerIsGuest && !board.allowGuests;
 
+  const replaceForFilter = useCallback((snapshot: MessageSnapshot) => {
+    if (snapshot.filterVersion !== undefined && BigInt(snapshot.filterVersion) < BigInt(filterVersion.current)) return;
+    filterVersion.current = snapshot.filterVersion ?? "0";
+    setFilterEnabled(snapshot.filterEnabled ?? false);
+    latestId.current = snapshot.messages.at(-1)?.id ?? "0";
+    setMessages(snapshot.messages); setHasOlder(snapshot.messages.length === 50);
+    setReplyTarget(null); setHistoryView(false); setHighlightedId(null); pendingJump.current = null;
+    stayAtBottom.current = true;
+  }, []);
+
   const refreshMessages = useCallback(async () => {
     if (!board.isMember || guestBlocked || unavailable) return;
     if (activeRequest.current) return;
@@ -55,7 +67,16 @@ export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, ini
       if (response.status === 404) { setUnavailable(true); return; }
       if (!response.ok || !Array.isArray(data.messages)) throw new Error(data.error ?? "会話を取得できませんでした。");
       if (controller.signal.aborted) return;
-      const incoming = data.messages as BoardMessage[];
+      const snapshot = parseMessageSnapshot(data);
+      if (snapshot.filterVersion !== undefined && snapshot.filterVersion !== filterVersion.current) {
+        // 設定切替時は表示済みの原文も残さず、新しい設定で取得し直す。
+        const fullResponse = await fetch(`/api/boards/${board.id}/messages`, { cache: "no-store", signal: controller.signal });
+        const full = await fullResponse.json();
+        if (!fullResponse.ok) throw new Error(full.error ?? "会話を更新できませんでした。");
+        if (controller.signal.aborted) return;
+        replaceForFilter(parseMessageSnapshot(full)); setPollError(null); return;
+      }
+      const incoming = snapshot.messages;
       if (incoming.length) {
         latestId.current = incoming.at(-1)!.id;
       }
@@ -71,7 +92,7 @@ export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, ini
     } finally {
       if (activeRequest.current === controller) activeRequest.current = null;
     }
-  }, [board.id, board.isMember, guestBlocked, unavailable]);
+  }, [board.id, board.isMember, guestBlocked, unavailable, replaceForFilter]);
 
   useEffect(() => {
     const clock = window.setInterval(() => setNow(Date.now()), 1000);
@@ -112,6 +133,10 @@ export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, ini
       const response = await fetch(`/api/boards/${board.id}/messages?before=${messages[0].id}`, { cache: "no-store" });
       const data = await response.json();
       if (!response.ok || !Array.isArray(data.messages)) throw new Error(data.error ?? "会話を取得できませんでした。");
+      const snapshot = parseMessageSnapshot(data);
+      if (snapshot.filterVersion !== undefined && snapshot.filterVersion !== filterVersion.current) {
+        replaceForFilter(snapshot); setHistoryView(true); return;
+      }
       const oldHeight = logRef.current?.scrollHeight ?? 0;
       setMessages(current => mergeMessages(current, data.messages));
       setHasOlder(data.messages.length === 50);
@@ -136,6 +161,8 @@ export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, ini
       if (!response.ok) throw new Error(data.error ?? "コメントを取得できませんでした。");
       if (controller.signal.aborted) return;
       const snapshot = parseMessageSnapshot(data);
+      filterVersion.current = snapshot.filterVersion ?? "0"; setFilterEnabled(snapshot.filterEnabled ?? false);
+      setReplyTarget(null);
       pendingJump.current = targetId ?? null; stayAtBottom.current = !targetId;
       latestId.current = snapshot.messages.at(-1)?.id ?? "0";
       setHistoryView(Boolean(targetId)); setHighlightedId(targetId ?? null);
@@ -160,7 +187,7 @@ export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, ini
         setReplyTarget(null);
         stayAtBottom.current = true;
         const savedMessage = result.message;
-        if (savedMessage) setMessages(current => mergeMessages(current, [{...savedMessage, replyToAuthorName: replyTarget?.authorName ?? null, replyToContent: replyTarget?.content.slice(0,240) ?? null}]));
+        if (savedMessage && (result.filterVersion === undefined || BigInt(result.filterVersion) >= BigInt(filterVersion.current))) setMessages(current => mergeMessages(current, [savedMessage]));
         // 投稿成功後の追加取得を、入力欄を使えるように戻す条件にしない。
         void refreshMessages();
       } catch { setError("投稿できませんでした。通信環境を確認して再度お試しください。"); }
@@ -180,6 +207,21 @@ export function BoardRoom({ board, viewerId, viewerIsGuest, initialMessages, ini
         <div><dt>参加人数・定員</dt><dd>{board.participantCount}人 / {board.capacity === null ? "制限なし" : `${board.capacity}人`}</dd></div>
         <div><dt>開始日時</dt><dd>{formatBoardDate(board.startsAt)}</dd></div>
       </dl>
+      <p className={styles.filterStatus}>NGワードフィルター：{filterEnabled ? "オン" : "オフ"}</p>
+      {board.isOwner && !unavailable && <label className={styles.filterControl}>
+        <input type="checkbox" checked={filterEnabled} disabled={pending || jumping} onChange={event => {
+          const enabled = event.target.checked;
+          const previous = filterEnabled;
+          setFilterEnabled(enabled);
+          setError(null); startTransition(async () => {
+            try {
+              const result = await setBoardFilter(board.id, enabled);
+              if (result.error) { setFilterEnabled(previous); setError(result.error); return; }
+              if (result.snapshot) replaceForFilter(result.snapshot);
+            } catch { setFilterEnabled(previous); setError("フィルタリング設定を保存できませんでした。"); }
+          });
+        }} />NGワードを「**」に置き換える（全員に適用）
+      </label>}
       {board.isOwner && !unavailable && <button type="button" className={styles.danger} disabled={pending} onClick={() => {
         if (!window.confirm("この掲示板を削除しますか？参加者全員の会話と参加登録も削除され、元に戻せません。")) return;
         setError(null);startTransition(async () => {

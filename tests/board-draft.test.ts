@@ -20,11 +20,11 @@ test("掲示板: 空白だけのタイトルと長すぎるタイトルを拒否
   }
 });
 
-test("掲示板: 定員は2〜20人の整数に限定する", () => {
-  for (const capacity of ["", "1", "21", "2.5", "人数", "Infinity"]) {
+test("掲示板: 定員は3〜20人の整数に限定する", () => {
+  for (const capacity of ["", "1", "2", "21", "2.5", "人数", "Infinity"]) {
     assert.ok(validateBoardDraft({ ...input, capacity }, now).error, capacity);
   }
-  for (const capacity of ["2", "20"]) {
+  for (const capacity of ["3", "20"]) {
     assert.equal(validateBoardDraft({ ...input, capacity }, now).error, null);
   }
 });
@@ -77,4 +77,11 @@ test("掲示板: ゲスト受け入れ設定を確認内容に保持する", () 
 test("ネタバレ注意: 初期値はオフ、指定時は作成内容に保持する", () => {
   assert.equal(validateBoardDraft(input,now).draft?.hasSpoilers,false);
   assert.equal(validateBoardDraft({...input,hasSpoilers:true},now).draft?.hasSpoilers,true);
+});
+
+test("今から: 日時を指定せずに開始でき、確認後に時間が進んでも期限切れにならない", () => {
+  const immediate = {...input,startImmediately:true,startDateTime:""};
+  assert.equal(validateBoardDraft(immediate,now).draft?.startsAt,new Date(now).toISOString());
+  assert.equal(validateBoardDraft(immediate,now+3600000).error,null);
+  assert.ok(validateBoardDraft({...immediate,startImmediately:false},now).error);
 });

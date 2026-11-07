@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useTransition, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { MAX_PROFILE_IMAGE_SIZE } from "@/lib/profile-images";
 import styles from "./account.module.css";
 import { UserProfile } from "@/types/profile";
 import { SiteSidebar } from "@/components/layout/site-sidebar";
@@ -25,6 +27,7 @@ import { DefaultAvatar } from "./artworks";
 
 export type AccountViewProps = {
   initialProfile: UserProfile;
+  isGuest?: boolean;
   favoriteBoards?: BoardSummary[];
   favoritesError?: string;
   createdBoards?: BoardSummary[];
@@ -32,7 +35,7 @@ export type AccountViewProps = {
   followError?: string;
 };
 
-export function AccountView({ initialProfile, favoriteBoards = [], favoritesError, createdBoards = [], boardsError, followError }: AccountViewProps) {
+export function AccountView({ initialProfile, isGuest = false, favoriteBoards = [], favoritesError, createdBoards = [], boardsError, followError }: AccountViewProps) {
   const [removedFavoriteIds, setRemovedFavoriteIds] = useState<string[]>([]);
   const visibleFavorites = favoriteBoards.filter(board => !removedFavoriteIds.includes(board.id));
   const [profile, setProfile] = useState<UserProfile>(initialProfile);
@@ -41,9 +44,26 @@ export function AccountView({ initialProfile, favoriteBoards = [], favoritesErro
   const [isPending, startTransition] = useTransition();
   const [profileError, setProfileError] = useState<string | null>(null);
 
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [removeAvatar, setRemoveAvatar] = useState(false);
+  const [removeCover, setRemoveCover] = useState(false);
+  useEffect(() => () => { if (avatarPreview) URL.revokeObjectURL(avatarPreview); }, [avatarPreview]);
+  useEffect(() => () => { if (coverPreview) URL.revokeObjectURL(coverPreview); }, [coverPreview]);
+  const closeEdit = () => { setIsEditModalOpen(false); setAvatarPreview(null); setCoverPreview(null); };
+  function previewFile(event: React.ChangeEvent<HTMLInputElement>, kind: "avatar" | "cover") {
+    const file = event.currentTarget.files?.[0];
+    const setter = kind === "avatar" ? setAvatarPreview : setCoverPreview;
+    if (!file) { setter(null); return; }
+    if (!file.size || file.size > MAX_PROFILE_IMAGE_SIZE || !["image/png","image/jpeg","image/webp"].includes(file.type)) {
+      event.currentTarget.value = ""; setter(null); setProfileError("各2MB以下のPNG・JPEG・WebPを選んでください。"); return;
+    }
+    setProfileError(null); setter(URL.createObjectURL(file));
+  }
+
   // 編集フォーム状態
   const [editForm, setEditForm] = useState({
-    nickname: profile.nickname,
+    nickname: profile.nickname || defaultProfileName(profile.userNumber),
     bio: profile.bio,
     gender: profile.gender,
     birthDate: profile.birthDate,
@@ -53,9 +73,11 @@ export function AccountView({ initialProfile, favoriteBoards = [], favoritesErro
   });
 
   const handleOpenEdit = () => {
+    if (isGuest) return;
+    setRemoveAvatar(false); setRemoveCover(false); setAvatarPreview(null); setCoverPreview(null);
     setProfileError(null);
     setEditForm({
-      nickname: profile.nickname,
+      nickname: profile.nickname || defaultProfileName(profile.userNumber),
       bio: profile.bio,
       gender: profile.gender,
       birthDate: profile.birthDate,
@@ -68,6 +90,7 @@ export function AccountView({ initialProfile, favoriteBoards = [], favoritesErro
 
   const handleSaveProfile = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isGuest) return;
     const formData = new FormData(e.currentTarget);
 
     setProfileError(null);
@@ -76,7 +99,7 @@ export function AccountView({ initialProfile, favoriteBoards = [], favoritesErro
         const res = await updateProfile(formData);
         if (res.success && res.profile) {
           setProfile({...res.profile,userNumber:profile.userNumber,followCount:profile.followCount,followerCount:profile.followerCount});
-          setIsEditModalOpen(false);
+          closeEdit();
         } else setProfileError(res.error || "プロフィールを保存できませんでした。");
       } catch { setProfileError("通信に失敗しました。入力内容はそのままで、もう一度保存をお試しください。"); }
     });
@@ -86,38 +109,39 @@ export function AccountView({ initialProfile, favoriteBoards = [], favoritesErro
     <div className={styles.accountPageRoot}>
       {/* 2. メインコンテンツエリア (3カラム) */}
       <div className={styles.layoutContainer}>
-        <SiteSidebar active="account" onEditProfile={handleOpenEdit} />
+        <SiteSidebar active="account" onEditProfile={isGuest ? undefined : handleOpenEdit} />
 
         {/* 2-B. 中央メインカラム */}
         <div className={styles.centerColumn}>
           {/* プロフィールヒーローカード */}
           <div className={styles.profileHeroCard}>
             <div className={styles.coverPhotoWrapper}>
+              {profile.coverUrl && <Image src={profile.coverUrl} alt="プロフィール背景" fill sizes="(max-width: 640px) 100vw, 780px" unoptimized className={styles.profileImage} />}
             </div>
 
             <div className={styles.profileHeroBody}>
               <div className={styles.avatarHeaderRow}>
                 <div className={styles.profileAvatar}>
-                  <DefaultAvatar />
+                  {profile.avatarUrl ? <Image src={profile.avatarUrl} alt="プロフィールアイコン" fill sizes="96px" unoptimized className={styles.profileImage} /> : <DefaultAvatar />}
                 </div>
-                <button
+                {!isGuest && <button
                   type="button"
                   className={styles.editProfileButton}
                   onClick={handleOpenEdit}
                 >
                   <EditPencilIcon />
                   <span>プロフィールを編集</span>
-                </button>
+                </button>}
               </div>
 
               <div className={styles.profileDetails}>
                 <h1 className={styles.profileName}>{profile.nickname || defaultProfileName(profile.userNumber)}</h1>
-                {profile.bio.trim() ? <p className={styles.profileBio}>{profile.bio}</p> : <button type="button" className={styles.profilePrompt} onClick={handleOpenEdit}>プロフィールを記入</button>}
+                {isGuest ? <p className={styles.profileBio}>ゲストのプロフィールは編集できません。</p> : profile.bio.trim() ? <p className={styles.profileBio}>{profile.bio}</p> : <button type="button" className={styles.profilePrompt} onClick={handleOpenEdit}>プロフィールを記入</button>}
 
-                <div className={styles.followMetrics}>
+                {!isGuest && <div className={styles.followMetrics}>
                   <Link href={`/users/${profile.id}?tab=following`}>フォロー <strong className={styles.followNumber}>{followError ? "—" : profile.followCount}</strong></Link>
                   <Link href={`/users/${profile.id}?tab=followers`}>フォロワー <strong className={styles.followNumber}>{followError ? "—" : profile.followerCount}</strong></Link>
-                </div>
+                </div>}
                 {followError && <p role="alert">{followError}</p>}
               </div>
             </div>
@@ -134,7 +158,7 @@ export function AccountView({ initialProfile, favoriteBoards = [], favoritesErro
             >
               作成した掲示板
             </button>
-            <button
+            {!isGuest && <button
               type="button"
               role="tab"
               aria-selected={activeTab === "favorites"}
@@ -142,7 +166,7 @@ export function AccountView({ initialProfile, favoriteBoards = [], favoritesErro
               onClick={() => setActiveTab("favorites")}
             >
               お気に入り
-            </button>
+            </button>}
           </div>
 
           {/* タブコンテンツ */}
@@ -223,15 +247,15 @@ export function AccountView({ initialProfile, favoriteBoards = [], favoritesErro
       </div>
 
       {/* 3. プロフィール編集モーダル */}
-      {isEditModalOpen && (
-        <div className={styles.modalBackdrop} onClick={() => setIsEditModalOpen(false)}>
+      {!isGuest && isEditModalOpen && (
+        <div className={styles.modalBackdrop} onClick={closeEdit}>
           <div className={styles.modalBox} role="dialog" aria-modal="true" aria-labelledby="profile-edit-title" onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 id="profile-edit-title" className={styles.modalTitle}>プロフィールを編集</h3>
               <button
                 type="button"
                 className={styles.closeButton}
-                onClick={() => setIsEditModalOpen(false)}
+                onClick={closeEdit}
                 aria-label="閉じる"
               >
                 ×
@@ -240,6 +264,19 @@ export function AccountView({ initialProfile, favoriteBoards = [], favoritesErro
 
             <form onSubmit={handleSaveProfile} className={styles.modalForm}>
               {profileError && <p role="alert" style={{color: "#b91c1c"}}>{profileError}</p>}
+              <p className={styles.imageHelp}>PNG・JPEG・WebP、各2MBまで。画像は公開画像として保存します。</p>
+              <div className={styles.formField}>
+                <label className={styles.fieldLabel} htmlFor="edit-avatar">アイコン画像</label>
+                <div className={styles.avatarPreview}>{!removeAvatar && (avatarPreview || profile.avatarUrl) ? <Image src={avatarPreview || profile.avatarUrl!} alt="アイコンのプレビュー" width={72} height={72} unoptimized className={styles.profileImage} /> : <DefaultAvatar />}</div>
+                <input id="edit-avatar" name="avatarFile" type="file" accept="image/png,image/jpeg,image/webp" disabled={isPending || removeAvatar} onChange={event=>previewFile(event,"avatar")} />
+                <label className={styles.imageReset}><input type="checkbox" name="removeAvatar" checked={removeAvatar} onChange={event=>setRemoveAvatar(event.target.checked)} disabled={isPending} />初期アイコンに戻す</label>
+              </div>
+              <div className={styles.formField}>
+                <label className={styles.fieldLabel} htmlFor="edit-cover">背景画像</label>
+                <div className={styles.coverPreview}>{!removeCover && (coverPreview || profile.coverUrl) && <Image src={coverPreview || profile.coverUrl!} alt="背景のプレビュー" fill sizes="400px" unoptimized className={styles.profileImage} />}</div>
+                <input id="edit-cover" name="coverFile" type="file" accept="image/png,image/jpeg,image/webp" disabled={isPending || removeCover} onChange={event=>previewFile(event,"cover")} />
+                <label className={styles.imageReset}><input type="checkbox" name="removeCover" checked={removeCover} onChange={event=>setRemoveCover(event.target.checked)} disabled={isPending} />初期背景に戻す</label>
+              </div>
               <div className={styles.formField}>
                 <label className={styles.fieldLabel} htmlFor="edit-nickname">ニックネーム</label>
                 <input
@@ -340,7 +377,7 @@ export function AccountView({ initialProfile, favoriteBoards = [], favoritesErro
                 <button
                   type="button"
                   className={styles.cancelButton}
-                  onClick={() => setIsEditModalOpen(false)}
+                  onClick={closeEdit}
                 >
                   キャンセル
                 </button>

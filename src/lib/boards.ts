@@ -4,7 +4,7 @@ import { createClient, getAuth } from "@/lib/supabase/server";
 import { DatabaseError, databaseError } from "./database-error";
 import type { StoredBoard, MessageSnapshot } from "@/types/board";
 import type { Movie } from "@/types/movie";
-import { parseMessageSnapshot } from "./board-messages";
+import { filteredSnapshot } from "./message-filtering";
 
 export function isUuid(value: unknown): value is string {
   return typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
@@ -38,7 +38,7 @@ export async function listBoards(id?: string): Promise<StoredBoard[]> {
       releaseDate: typeof value.movie.releaseDate === "string" ? value.movie.releaseDate : null,
       genres: Array.isArray(value.movie.genres) ? value.movie.genres.filter((g): g is string => typeof g === "string") : [],
     };
-    return { hasSpoilers: value.has_spoilers === true, isFavorite: favoriteIds.has(value.id), id: value.id, title: value.title, movie, capacity: value.capacity === null ? null : Number(value.capacity), startsAt: value.starts_at, createdAt: value.created_at, participantCount: Number(value.participant_count), allowGuests: value.allow_guests, ownerId: value.created_by, ownerName: value.creator_name, ownerIsGuest: value.creator_is_guest, isMember: value.is_member === true, isOwner: value.is_owner === true };
+    return { filterEnabled: value.filter_enabled === true, filterVersion: typeof value.filter_version === "string" ? value.filter_version : "0", hasSpoilers: value.has_spoilers === true, isFavorite: favoriteIds.has(value.id), id: value.id, title: value.title, movie, capacity: value.capacity === null ? null : Number(value.capacity), startsAt: value.starts_at, createdAt: value.created_at, participantCount: Number(value.participant_count), allowGuests: value.allow_guests, ownerId: value.created_by, ownerName: value.creator_name, ownerIsGuest: value.creator_is_guest, isMember: value.is_member === true, isOwner: value.is_owner === true };
   });
 }
 
@@ -49,7 +49,7 @@ export async function getMessageSnapshot(boardId: string, options: { after?: str
     p_board_id: boardId, p_after: options.after ?? null, p_before: options.before ?? null, p_visible_after: options.visibleAfter ?? null,
   }));
   if (error) throw databaseError(error);
-  return parseMessageSnapshot(data);
+  return filteredSnapshot(data);
 }
 
 export async function getMessageContext(boardId: string, messageId: string): Promise<MessageSnapshot> {
@@ -57,5 +57,5 @@ export async function getMessageContext(boardId: string, messageId: string): Pro
   if (authError || !data?.claims.sub) throw new DatabaseError("ログインしてください。", 401);
   const { data: snapshot, error } = await readDatabase(() => supabase.rpc("cinema_get_message_context", { p_board_id: boardId, p_message_id: messageId }));
   if (error) throw databaseError(error);
-  return parseMessageSnapshot(snapshot);
+  return filteredSnapshot(snapshot);
 }

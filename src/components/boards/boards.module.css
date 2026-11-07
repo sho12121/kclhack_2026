@@ -136,7 +136,10 @@
 .boardFilters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; }
 .boardFilters > div { min-width: 0; }
 .boardFilters label { display: block; margin-bottom: 8px; color: #334155; font-size: 13px; font-weight: 600; }
-.boardFilters select { width: 100%; min-width: 0; min-height: 44px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; color: #1e293b; font: inherit; font-size: 14px; }
+.boardFilters select, .boardFilters input { width: 100%; min-width: 0; min-height: 44px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; color: #1e293b; font: inherit; font-size: 14px; }
+.movieQuery { grid-column: 1 / -1; }
+.movieQuery input { font-size: 16px; }
+.movieQuery small { display: block; margin-top: 6px; color: #475569; font-size: 12px; }
 .genreTags { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 12px 0 0; }
 .genreTags li { max-width: 100%; padding: 3px 8px; border-radius: 6px; background: #f1f5f9; color: #475569; font-size: 12px; }
 @media (max-width: 600px) { .boardFilters { grid-template-columns: 1fr; gap: 14px; padding: 16px; } }

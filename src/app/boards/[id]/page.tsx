@@ -32,6 +32,8 @@ export default async function BoardPage({ params, searchParams }: {
     if (board?.isMember && !(data.claims.is_anonymous === true && !board.allowGuests)) {
       if (snapshot.error) throw snapshot.error;
       messages = snapshot.value?.messages ?? [];
+      board.filterEnabled = snapshot.value?.filterEnabled ?? board.filterEnabled;
+      board.filterVersion = snapshot.value?.filterVersion ?? board.filterVersion;
     }
   } catch (error) {
     return <section className="auth-card"><h1>掲示板を読み込めませんでした</h1><p role="alert">{error instanceof DatabaseError ? error.message : "通信環境を確認して再度お試しください。"}</p><Link href={`/boards/${id}`}>再読み込み</Link><p><Link href="/">掲示板一覧へ</Link></p></section>;

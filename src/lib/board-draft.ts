@@ -2,7 +2,7 @@ import type { BoardDraft } from "../types/board.ts";
 import type { Movie } from "../types/movie.ts";
 
 export const MAX_BOARD_TITLE_LENGTH = 80;
-export const MIN_BOARD_CAPACITY = 2;
+export const MIN_BOARD_CAPACITY = 3;
 export const MAX_BOARD_CAPACITY = 20;
 
 export type BoardDraftInput = {
@@ -12,6 +12,7 @@ export type BoardDraftInput = {
   startDateTime: string;
   allowGuests?: boolean;
   hasSpoilers?: boolean;
+  startImmediately?: boolean;
 };
 
 export function validateBoardStartDateTime(value: string, now = Date.now()): string | null {
@@ -32,6 +33,7 @@ export function validateBoardDraft(
   now = Date.now(),
 ): { draft: BoardDraft; error: null } | { draft: null; error: string } {
   const title = input.title.trim();
+  if (input.startImmediately !== undefined && typeof input.startImmediately !== "boolean") return { draft: null, error: "開始方法を確認してください。" };
   if (input.hasSpoilers !== undefined && typeof input.hasSpoilers !== "boolean") return { draft: null, error: "ネタバレ注意の設定を確認してください。" };
   if (input.allowGuests !== undefined && typeof input.allowGuests !== "boolean") return { draft: null, error: "ゲストの参加設定を確認してください。" };
   if (!title || title.length > MAX_BOARD_TITLE_LENGTH) {
@@ -46,13 +48,13 @@ export function validateBoardDraft(
     return { draft: null, error: `定員は${MIN_BOARD_CAPACITY}〜${MAX_BOARD_CAPACITY}人で入力してください。` };
   }
 
-  const dateError = validateBoardStartDateTime(input.startDateTime, now);
+  const dateError = input.startImmediately ? null : validateBoardStartDateTime(input.startDateTime, now);
   if (dateError) return { draft: null, error: dateError };
-  const timestamp = Date.parse(`${input.startDateTime}:00+09:00`);
+  const timestamp = input.startImmediately ? now : Date.parse(`${input.startDateTime}:00+09:00`);
 
   return {
     error: null,
-    draft: { title, movie: input.movie, capacity, startsAt: new Date(timestamp).toISOString(), allowGuests: input.allowGuests ?? true, hasSpoilers: input.hasSpoilers ?? false },
+    draft: { title, movie: input.movie, capacity, startsAt: new Date(timestamp).toISOString(), allowGuests: input.allowGuests ?? true, hasSpoilers: input.hasSpoilers ?? false, startImmediately: input.startImmediately ?? false },
   };
 }
 

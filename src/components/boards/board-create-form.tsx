@@ -230,6 +230,8 @@ export function BoardCreateForm({ initialNow, inviteCandidates = [], invitationE
   const [allowGuests, setAllowGuests] = useState(true);
   const [hasSpoilers, setHasSpoilers] = useState(false);
 
+  const [startImmediately, setStartImmediately] = useState(false);
+
   // 開始日時（初期値: 7日後の23時59分）
   const [selectedDate, setSelectedDate] = useState(() => {
     const d = new Date(initialNow + 7 * 24 * 60 * 60 * 1000);
@@ -259,7 +261,7 @@ export function BoardCreateForm({ initialNow, inviteCandidates = [], invitationE
   const formattedHour = selectedHour.trim() === "" ? "" : pad2(Number(selectedHour));
   const formattedMinute = selectedMinute.trim() === "" ? "" : pad2(Number(selectedMinute));
   const fullStartDateTime = `${selectedDate}T${formattedHour}:${formattedMinute}`;
-  const dateTimeError = validateBoardStartDateTime(fullStartDateTime, now);
+  const dateTimeError = startImmediately ? null : validateBoardStartDateTime(fullStartDateTime, now);
 
   const isFormValid = (unlimitedCapacity || isCapacityValid) && !dateTimeError;
 
@@ -288,17 +290,6 @@ export function BoardCreateForm({ initialNow, inviteCandidates = [], invitationE
     invalidatePreview();
   }
 
-  function resetFromNow() {
-    // 分単位の入力で過去にならないよう、現在時刻の次の分に合わせる。
-    const nextMinute = Math.floor(Date.now() / 60_000) * 60_000 + 60_000;
-    const jst = new Date(nextMinute + 9 * 60 * 60 * 1000).toISOString();
-    setNow(Date.now());
-    setSelectedDate(jst.slice(0, 10));
-    setSelectedHour(jst.slice(11, 13));
-    setSelectedMinute(jst.slice(14, 16));
-    invalidatePreview();
-  }
-
   // 現在選択中の日付が今日から何日後かを計算
   let daysDiffFromToday = 0;
   if (selectedDate && todayStr) {
@@ -322,7 +313,7 @@ export function BoardCreateForm({ initialNow, inviteCandidates = [], invitationE
       movie,
       capacity: unlimitedCapacity ? "unlimited" : capacity,
       startDateTime: fullStartDateTime,
-      allowGuests, hasSpoilers,
+      allowGuests, hasSpoilers, startImmediately,
     });
     setError(result.error);
     setPreview(result.draft);
@@ -554,7 +545,7 @@ export function BoardCreateForm({ initialNow, inviteCandidates = [], invitationE
                 min={MIN_BOARD_CAPACITY}
                 max={MAX_BOARD_CAPACITY}
                 step="1"
-                value={isCapacityValid ? capacityNum : Math.min(MAX_BOARD_CAPACITY, Math.max(MIN_BOARD_CAPACITY, Number(capacity) || 2))}
+                value={isCapacityValid ? capacityNum : Math.min(MAX_BOARD_CAPACITY, Math.max(MIN_BOARD_CAPACITY, Number(capacity) || MIN_BOARD_CAPACITY))}
                 className={styles.capacitySlider}
                 aria-label="定員スライダー"
                 onChange={(event) => handleCapacityChange(event.target.value)}
@@ -569,7 +560,7 @@ export function BoardCreateForm({ initialNow, inviteCandidates = [], invitationE
 
           </fieldset>
           <small id={`${id}-capacity-help`} className={styles.fieldHelp}>
-            制限なし、または2〜20人から選べます。
+            制限なし、または{MIN_BOARD_CAPACITY}〜{MAX_BOARD_CAPACITY}人から選べます。
           </small>
 
           {!unlimitedCapacity && !isCapacityValid && (
@@ -582,7 +573,7 @@ export function BoardCreateForm({ initialNow, inviteCandidates = [], invitationE
         {/* 開始日時設定 */}
         <div className={styles.field}>
           <div className={styles.labelRow}>
-            <label htmlFor={`${id}-calendar-date`}>掲示板の開始日時</label>
+            <span className={styles.blockTitle}>掲示板の開始</span>
             <span className={styles.requiredBadge}>必須</span>
           </div>
 
@@ -594,16 +585,18 @@ export function BoardCreateForm({ initialNow, inviteCandidates = [], invitationE
             value={fullStartDateTime}
           />
 
-          <div className={styles.dateTimeSection}>
+          <fieldset className={styles.startMode} disabled={isCreating}>
+            <legend>開始方法</legend>
+            <label><input type="radio" name="startMode" value="now" checked={startImmediately} onChange={() => { setStartImmediately(true); invalidatePreview(); }} />今から</label>
+            <label><input type="radio" name="startMode" value="scheduled" checked={!startImmediately} onChange={() => { setStartImmediately(false); invalidatePreview(); }} />日時を指定</label>
+          </fieldset>
+          {startImmediately ? <p className={styles.fieldHelp}>作成するとすぐに開始します。日時の指定は不要です。</p> : <div className={styles.dateTimeSection}>
             {/* 1. 操作しやすい日付選択UI */}
             <div className={styles.dateSelectBlock}>
               <div className={styles.dateBlockHeader}>
                 <span className={styles.blockTitle}><CalendarIcon /> 日付を設定</span>
               </div>
 
-              <div className={styles.quickChipsList}>
-                <button type="button" className={styles.chipBtn} onClick={resetFromNow}>今から</button>
-              </div>
               <div className={styles.dateAdjustGrid} role="group" aria-label="開始日の調整">
                 {[
                   { amount: 1, unit: "days", label: "1日" },
@@ -733,7 +726,7 @@ export function BoardCreateForm({ initialNow, inviteCandidates = [], invitationE
                 ⚠️ {dateTimeError}
               </p>
             )}
-          </div>
+          </div>}
         </div>
 
         {error && (
@@ -803,7 +796,7 @@ export function BoardCreateForm({ initialNow, inviteCandidates = [], invitationE
             </div>
             <div className={styles.previewItem}>
               <dt>開始日時</dt>
-              <dd>{formatBoardDate(preview.startsAt)}</dd>
+              <dd>{preview.startImmediately ? "今から（作成後すぐに開始）" : formatBoardDate(preview.startsAt)}</dd>
             </div>
           </dl>
           <div className={styles.actions}>
@@ -815,7 +808,8 @@ export function BoardCreateForm({ initialNow, inviteCandidates = [], invitationE
                 form.set("title", preview.title);
                 form.set("tmdbId", String(preview.movie.tmdbId));
                 form.set("capacity", preview.capacity === null ? "unlimited" : String(preview.capacity));
-                form.set("startDateTime", fullStartDateTime);
+                form.set("startDateTime", preview.startImmediately ? "" : fullStartDateTime);
+                form.set("startImmediately", String(preview.startImmediately ?? false));
                 form.set("allowGuests", String(preview.allowGuests));
                 form.set("hasSpoilers", String(preview.hasSpoilers ?? false));
                 for (const inviteeId of inviteeIds) form.append("inviteeId", inviteeId);

@@ -16,7 +16,12 @@ export function parseMessageSnapshot(value: unknown): MessageSnapshot {
   });
   const deletedIds = snapshot.deletedIds;
   if (!deletedIds.every((id: unknown) => typeof id === "string" && /^\d+$/.test(id))) throw databaseError(null);
-  return { messages, deletedIds };
+  if (snapshot.filterEnabled !== undefined && typeof snapshot.filterEnabled !== "boolean") throw databaseError(null);
+  if (snapshot.filterVersion !== undefined && (typeof snapshot.filterVersion !== "string" || !/^\d+$/.test(snapshot.filterVersion))) throw databaseError(null);
+  return { messages, deletedIds,
+    ...(snapshot.filterEnabled === undefined ? {} : {filterEnabled:snapshot.filterEnabled as boolean}),
+    ...(snapshot.filterVersion === undefined ? {} : {filterVersion:snapshot.filterVersion as string}),
+  };
 }
 
 export function isDatabaseId(value: unknown): value is string {

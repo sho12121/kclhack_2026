@@ -590,3 +590,12 @@
 
 .profilePrompt { display: block; margin: 8px 0 16px; padding: 0; border: none; background: transparent; color: #64748b; font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
 .profilePrompt:hover { color: #475569; text-decoration: underline; }
+
+.profileAvatar { position: relative; overflow: hidden; }
+.profileImage { object-fit: cover; width: 100%; height: 100%; }
+.avatarPreview { width: 72px; height: 72px; border-radius: 50%; overflow: hidden; }
+.coverPreview { position: relative; height: 100px; width: 100%; border-radius: 10px; overflow: hidden; background: #e2e8f0; }
+.imageHelp { color: #475569; font-size: 12px; line-height: 1.8; }
+.imageReset { display: flex; gap: 8px; align-items: center; min-height: 44px; font-size: 13px; cursor: pointer; }
+.imageReset input { width: 18px; height: 18px; accent-color: #2563eb; }
+.formField input[type="file"] { max-width: 100%; font-size: 13px; }
